@@ -1,0 +1,30 @@
+{
+  "theme": "voltron",
+  "win_class": "combat",
+  "lands": 37,
+  "slots": {
+    "ramp": 8,
+    "draw": 8,
+    "interaction": 8,
+    "protection": 10,
+    "seed": 4,
+    "payoff": 14,
+    "enabler": 6,
+    "flex": 4
+  },
+  "queries": {
+    "ramp": "tag:ramp",
+    "draw": "tag:draw",
+    "interaction": "tag:removal OR tag:counter",
+    "protection": "tag:protection",
+    "seed": "equip OR aura",
+    "payoff": "tag:aura OR tag:equipment",
+    "enabler": "tag:equipment OR tag:aura",
+    "flex": "tag:protection OR tag:draw"
+  },
+  "fallback_query": "tag:equipment OR tag:aura OR tag:ramp",
+  "banned_roles": {
+    "precon": ["extra-turn", "stax"],
+    "casual": ["extra-turn"]
+  }
+}

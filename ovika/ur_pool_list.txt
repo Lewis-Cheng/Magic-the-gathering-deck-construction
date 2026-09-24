@@ -1,0 +1,367 @@
+0.0  Adventurer's Inn                                        Land
+0.0  Animal Sanctuary                                        Land
+0.0  Baron, Airship Kingdom                                  Land
+0.0  Cascading Cataracts                                     Land
+0.0  Command Bridge                                          Land
+0.0  Command Tower                                           Land
+0.0  Crossroads Village                                      Land
+0.0  Eden, Seat of the Sanctum                               Land
+0.0  Everflowing Chalice                        {0}          Artifact
+0.0  Exotic Orchard                                          Land
+0.0  Inventors' Fair                                         Legendary Land
+0.0  Jidoor, Aristocratic Capital // Overture   {4}{U}{U}    Land
+0.0  Krosan Verge                                            Land
+0.0  Mirrorpool                                              Land
+0.0  Mountain                                                Basic Land
+0.0  Mystifying Maze                                         Land
+0.0  Path of Ancestry                                        Land
+0.0  Peculiar Lighthouse                                     Land
+0.0  Power Depot                                             Artifact Land
+0.0  Terrain Generator                                       Land
+0.0  Terramorphic Expanse                                    Land
+0.0  The Autonomous Furnace                                  Land
+0.0  The Monumental Facade                                   Land
+1.0  Aegis Turtle                               {U}          Creature
+1.0  An Offer You Can't Refuse                  {U}          Instant
+1.0  Aspirant's Ascent                          {U}          Instant
+1.0  Atomic Microsizer                          {U}          Artifact
+1.0  Basilisk Collar                            {1}          Artifact
+1.0  Bear Trap                                  {1}          Artifact
+1.0  Blacksmith's Talent                        {R}          Enchantment
+1.0  Blazing Bomb                               {R}          Creature
+1.0  Blazing Torch                              {1}          Artifact
+1.0  Burst Lightning                            {R}          Instant
+1.0  Clockwork Percussionist                    {R}          Artifact Creature
+1.0  Coral Sword                                {R}          Artifact
+1.0  Dragonfire Blade                           {1}          Artifact
+1.0  Dragonstorm Forecaster                     {U}          Creature
+1.0  Eidolon of Philosophy                      {U}          Enchantment Creature
+1.0  Enter the Enigma                           {U}          Sorcery
+1.0  Essence Flux                               {U}          Instant
+1.0  Excalibur II                               {1}          Legendary Artifact
+1.0  Font of Progress                           {U}          Artifact
+1.0  Full Bore                                  {R}          Instant
+1.0  Humbling Elder                             {U}          Creature
+1.0  Inventor's Axe                             {R}          Artifact
+1.0  Lightning Bolt                             {R}          Instant
+1.0  Nutrient Block                             {1}          Artifact
+1.0  Purphoros's Intervention                   {X}{R}       Sorcery
+1.0  Ringing Strike Mastery                     {U}          Enchantment
+1.0  Satyr's Cunning                            {R}          Sorcery
+1.0  Sawblade Scamp                             {R}          Creature
+1.0  Scrabbling Skullcrab                       {U}          Creature
+1.0  Skullclamp                                 {1}          Artifact
+1.0  Slagdrill Scrapper                         {R}          Artifact Creature
+1.0  Sleep Magic                                {U}          Enchantment
+1.0  Sleep of the Dead                          {U}          Sorcery
+1.0  Sol Ring                                   {1}          Artifact
+1.0  Soul-Guide Lantern                         {1}          Artifact
+1.0  Spontaneous Mutation                       {U}          Enchantment
+1.0  Stadium Headliner                          {R}          Creature
+1.0  Stolen Uniform                             {U}          Instant
+1.0  Surgical Skullbomb                         {1}          Artifact
+1.0  Syncopate                                  {X}{U}       Instant
+1.0  Thunder Magic                              {R}          Instant
+1.0  Traveler's Amulet                          {1}          Artifact
+1.0  Trial of Agony                             {R}          Sorcery
+1.0  Triton Wavebreaker                         {U}          Enchantment Creature
+1.0  Turn Inside Out                            {R}          Instant
+1.0  Unable to Scream                           {U}          Enchantment
+1.0  Vexing Bauble                              {1}          Artifact
+1.0  Wild Ride                                  {R}          Sorcery
+1.0  Wingspan Stride                            {U}          Enchantment
+1.0  Witness Protection                         {U}          Enchantment
+2.0  Abrade                                     {1}{R}       Instant
+2.0  Agent of Kotis                             {1}{U}       Creature
+2.0  Arcane Signet                              {2}          Artifact
+2.0  Atmosphere Surgeon                         {1}{U}       Creature
+2.0  Barbed Batterfist                          {1}{R}       Artifact
+2.0  Battle Cry Goblin                          {1}{R}       Creature
+2.0  Brazen Collector                           {1}{R}       Creature
+2.0  Brineborn Cutthroat                        {1}{U}       Creature
+2.0  Bring the Ending                           {1}{U}       Instant
+2.0  Bulk Up                                    {1}{R}       Instant
+2.0  Campus Guide                               {2}          Artifact Creature
+2.0  Cargo Ship                                 {1}{U}       Artifact
+2.0  Chainsaw                                   {1}{R}       Artifact
+2.0  Chrome Companion                           {2}          Artifact Creature
+2.0  Creeping Peeper                            {1}{U}       Creature
+2.0  Disruptor Flute                            {2}          Artifact
+2.0  Don't Make a Sound                         {1}{U}       Instant
+2.0  Dreams of Laguna                           {1}{U}       Instant
+2.0  Drill Too Deep                             {1}{R}       Instant
+2.0  Elementalist Adept                         {1}{U}       Creature
+2.0  Embermouth Sentinel                        {2}          Artifact Creature
+2.0  Fear of Isolation                          {1}{U}       Enchantment Creature
+2.0  Fire-Rim Form                              {1}{R}       Enchantment
+2.0  Fresh Start                                {1}{U}       Enchantment
+2.0  Friendly Teddy                             {2}          Artifact Creature
+2.0  Glimmerlight                               {2}          Artifact
+2.0  Goldvein Pick                              {2}          Artifact
+2.0  Grab the Prize                             {1}{R}       Sorcery
+2.0  Hand That Feeds                            {1}{R}       Creature
+2.0  Haste Magic                                {1}{R}       Instant
+2.0  Ice Magic                                  {1}{U}       Instant
+2.0  Illvoi Operative                           {1}{U}       Creature
+2.0  Impact Tremors                             {1}{R}       Enchantment
+2.0  Instant Ramen                              {2}          Artifact
+2.0  Inti, Seneschal of the Sun                 {1}{R}       Legendary Creature
+2.0  Investigator's Journal                     {2}          Artifact
+2.0  Irreverent Gremlin                         {1}{R}       Creature
+2.0  Item Shopkeep                              {1}{R}       Creature
+2.0  Jet Medallion                              {2}          Artifact
+2.0  Malcator's Watcher                         {1}{U}       Artifact Creature
+2.0  Marvin, Murderous Mimic                    {2}          Legendary Artifact Creature
+2.0  Mechan Navigator                           {1}{U}       Artifact Creature
+2.0  Medomai's Prophecy                         {1}{U}       Enchantment
+2.0  Mental Modulation                          {1}{U}       Instant
+2.0  Mercurial Spelldancer                      {1}{U}       Creature
+2.0  Mesmeric Orb                               {2}          Artifact
+2.0  Mirror Shield                              {2}          Artifact
+2.0  Myr Convert                                {2}          Artifact Creature
+2.0  Omen of the Forge                          {1}{R}       Enchantment
+2.0  Opera Love Song                            {1}{R}       Instant
+2.0  Oread of Mountain's Blaze                  {1}{R}       Enchantment Creature
+2.0  Paranormal Analyst                         {1}{U}       Creature
+2.0  Piggy Bank                                 {1}{R}       Artifact Creature
+2.0  Piranha Fly                                {1}{U}       Creature
+2.0  Prologue to Phyresis                       {1}{U}       Instant
+2.0  PuPu UFO                                   {2}          Artifact Creature
+2.0  Pyroclasm                                  {1}{R}       Sorcery
+2.0  Quick-Draw Katana                          {2}          Artifact
+2.0  Rabid Gnaw                                 {1}{R}       Instant
+2.0  Rig for War                                {1}{R}       Instant
+2.0  Riptide Turtle                             {1}{U}       Creature
+2.0  Roiling Dragonstorm                        {1}{U}       Enchantment
+2.0  Run Away Together                          {1}{U}       Instant
+2.0  Sabotender                                 {1}{R}       Creature
+2.0  Sage's Nouliths                            {1}{U}       Artifact
+2.0  Sarkhan, Dragon Ascendant                  {1}{R}       Legendary Creature
+2.0  Scorching Dragonfire                       {1}{R}       Instant
+2.0  Scorpion Sentinel                          {1}{U}       Artifact Creature
+2.0  Self-Destruct                              {1}{R}       Instant
+2.0  Shock Brigade                              {1}{R}       Creature
+2.0  Slumbering Cerberus                        {1}{R}       Creature
+2.0  Sphere of Resistance                       {2}          Artifact
+2.0  Stalked Researcher                         {1}{U}       Creature
+2.0  Stay Hidden, Stay Silent                   {1}{U}       Enchantment
+2.0  Stinging Lionfish                          {1}{U}       Enchantment Creature
+2.0  Summon: Brynhildr                          {1}{R}       Enchantment Creature
+2.0  Suplex                                     {1}{R}       Sorcery
+2.0  The Filigree Sylex                         {2}          Legendary Artifact
+2.0  Think Twice                                {1}{U}       Instant
+2.0  Three Tree Mascot                          {2}          Artifact Creature
+2.0  Thrill of Possibility                      {1}{R}       Instant
+2.0  Thrummingbird                              {1}{U}       Creature
+2.0  Ultros, Obnoxious Octopus                  {1}{U}       Legendary Creature
+2.0  Underworld Rage-Hound                      {1}{R}       Creature
+2.0  Untimely Malfunction                       {1}{R}       Instant
+2.0  Whiskerquill Scribe                        {1}{R}       Creature
+2.0  Wings of Hubris                            {2}          Artifact
+2.0  Winter Orb                                 {2}          Artifact
+2.0  Zookeeper Mechan                           {1}{R}       Artifact Creature
+3.0  Adventurer's Airship                       {3}          Artifact
+3.0  Agate Assault                              {2}{R}       Sorcery
+3.0  All-Fates Scroll                           {3}          Artifact
+3.0  Aspect of Manticore                        {2}{R}       Enchantment
+3.0  Bilbo's Ring                               {3}          Legendary Artifact
+3.0  Bladegraft Aspirant                        {2}{R}       Creature
+3.0  Bloodline Pretender                        {3}          Artifact Creature
+3.0  Burning Vengeance                          {2}{R}       Enchantment
+3.0  Burnished Hart                             {3}          Artifact Creature
+3.0  Cephalid Inkmage                           {2}{U}       Creature
+3.0  Chrome Prowler                             {2}{U}       Artifact Creature
+3.0  Cloudsculpt Technician                     {2}{U}       Creature
+3.0  Combat Tutorial                            {2}{U}       Sorcery
+3.0  Court of Cunning                           {1}{U}{U}    Enchantment
+3.0  Cursed Mirror                              {2}{R}       Artifact
+3.0  Cursed Windbreaker                         {2}{U}       Artifact
+3.0  Cyclops Superconductor                     {1}{U}{R}    Creature
+3.0  Dalakos, Crafter of Wonders                {1}{U}{R}    Legendary Creature
+3.0  Deny the Divine                            {2}{U}       Instant
+3.0  Dragoon's Wyvern                           {2}{U}       Creature
+3.0  Elite Instructor                           {2}{U}       Creature
+3.0  Erratic Apparition                         {2}{U}       Creature
+3.0  Fiery Temper                               {1}{R}{R}    Instant
+3.0  Firespitter Whelp                          {2}{R}       Creature
+3.0  Firion, Wild Rose Warrior                  {2}{R}       Legendary Creature
+3.0  Flamewake Phoenix                          {1}{R}{R}    Creature
+3.0  Frontline War-Rager                        {2}{R}       Creature
+3.0  Goblin Boarders                            {2}{R}       Creature
+3.0  Goblin Rabblemaster                        {2}{R}       Creature
+3.0  Goblin Surprise                            {2}{R}       Instant
+3.0  Herald's Horn                              {3}          Artifact
+3.0  Hero of the Games                          {2}{R}       Creature
+3.0  Impending Doom                             {2}{R}       Enchantment
+3.0  Inspiration from Beyond                    {2}{U}       Sorcery
+3.0  Kavaron Turbodrone                         {2}{R}       Artifact Creature
+3.0  Kiora, the Rising Tide                     {2}{U}       Legendary Creature
+3.0  Komainu Battle Armor                       {2}{R}       Artifact Creature
+3.0  Laboratory Maniac                          {2}{U}       Creature
+3.0  Light Up the Stage                         {2}{R}       Sorcery
+3.0  Lithobraking                               {2}{R}       Instant
+3.0  Lunar Insight                              {2}{U}       Sorcery
+3.0  Magic Pot                                  {3}          Artifact Creature
+3.0  Mindwhisker                                {2}{U}       Creature
+3.0  Mocking Sprite                             {2}{U}       Creature
+3.0  Mogg Mob                                   {R}{R}{R}    Creature
+3.0  Molten Gatekeeper                          {2}{R}       Artifact Creature
+3.0  Myr Custodian                              {3}          Artifact Creature
+3.0  Naiad of Hidden Coves                      {2}{U}       Enchantment Creature
+3.0  Nanoform Sentinel                          {2}{U}       Artifact Creature
+3.0  Oketra's Monument                          {3}          Legendary Artifact
+3.0  Pearl of Wisdom                            {2}{U}       Sorcery
+3.0  Phyrexian Atlas                            {3}          Artifact
+3.0  Pristine Talisman                          {3}          Artifact
+3.0  Quietus Spike                              {3}          Artifact
+3.0  Rampaging Soulrager                        {2}{R}       Creature
+3.0  Refute                                     {1}{U}{U}    Instant
+3.0  Samurai's Katana                           {2}{R}       Artifact
+3.0  Seismic Rupture                            {2}{R}       Sorcery
+3.0  Seize Opportunity                          {2}{R}       Instant
+3.0  Shantotto, Tactician Magician              {1}{U}{R}    Legendary Creature
+3.0  Storm Herald                               {2}{R}       Creature
+3.0  Strixhaven Stadium                         {3}          Artifact
+3.0  Stuck in Summoner's Sanctum                {2}{U}       Enchantment
+3.0  Summon: G.F. Ifrit                         {2}{R}       Enchantment Creature
+3.0  Taurean Mauler                             {2}{R}       Creature
+3.0  Thief's Knife                              {2}{U}       Artifact
+3.0  Trinket Mage                               {2}{U}       Creature
+3.0  Tunnel Surveyor                            {2}{U}       Creature
+3.0  Twist Reality                              {1}{U}{U}    Instant
+3.0  Uncaged Fury                               {2}{R}       Instant
+3.0  Unexpected Request                         {2}{R}       Sorcery
+3.0  Unsparing Boltcaster                       {2}{R}       Creature
+3.0  Unwilling Vessel                           {2}{U}       Creature
+3.0  Urabrask's Forge                           {2}{R}       Artifact
+3.0  Uthros Psionicist                          {2}{U}       Creature
+3.0  Vengeful Possession                        {2}{R}       Sorcery
+3.0  Vicious Clown                              {2}{R}       Creature
+3.0  Virulent Silencer                          {3}          Artifact Creature
+3.0  Vulshok Factory                            {2}{R}       Artifact
+3.0  Watcher of the Wayside                     {3}          Artifact Creature
+3.0  Waterspout Warden                          {2}{U}       Creature
+3.0  Weftstalker Ardent                         {2}{R}       Creature
+3.0  Wild-Field Scarecrow                       {3}          Artifact Creature
+3.0  Zell Dincht                                {2}{R}       Legendary Creature
+4.0  Aetherize                                  {3}{U}       Instant
+4.0  Ashiok's Erasure                           {2}{U}{U}    Enchantment
+4.0  Barret Wallace                             {3}{R}       Legendary Creature
+4.0  Brambleguard Captain                       {3}{R}       Creature
+4.0  Chimney Rabble                             {3}{R}       Creature
+4.0  Clammy Prowler                             {3}{U}       Enchantment Creature
+4.0  Court of Vantress                          {2}{U}{U}    Enchantment
+4.0  Cryptic Command                            {1}{U}{U}{U} Instant
+4.0  Deem Inferior                              {3}{U}       Sorcery
+4.0  Eject                                      {3}{U}       Instant
+4.0  Encroaching Mycosynth                      {3}{U}       Artifact
+4.0  Equilibrium Adept                          {3}{R}       Creature
+4.0  Flummoxed Cyclops                          {3}{R}       Creature
+4.0  Galvanic Juggernaut                        {4}          Artifact Creature
+4.0  Glimmerburst                               {3}{U}       Instant
+4.0  Hidetsugu's Second Rite                    {3}{R}       Instant
+4.0  Involuntary Employment                     {3}{R}       Sorcery
+4.0  Jester's Cap                               {4}          Artifact
+4.0  Kav Landseeker                             {3}{R}       Creature
+4.0  Koth, Fire of Resistance                   {2}{R}{R}    Legendary Planeswalker
+4.0  Leyline Axe                                {4}          Artifact
+4.0  Leyline of Transformation                  {2}{U}{U}    Enchantment
+4.0  Lost in Space                              {3}{U}       Instant
+4.0  Maskwood Nexus                             {4}          Artifact
+4.0  Meldweb Curator                            {3}{U}       Creature
+4.0  Micromancer                                {3}{U}       Creature
+4.0  Most Valuable Slayer                       {3}{R}       Creature
+4.0  Myr Kinsmith                               {4}          Artifact Creature
+4.0  Portent of Betrayal                        {3}{R}       Sorcery
+4.0  Red Tiger Mechan                           {3}{R}       Artifact Creature
+4.0  Relm's Sketching                           {2}{U}{U}    Sorcery
+4.0  Retrieve the Esper                         {3}{U}       Sorcery
+4.0  Ribskiff                                   {4}          Artifact
+4.0  Ripchain Razorkin                          {3}{R}       Creature
+4.0  Scour for Scrap                            {3}{U}       Instant
+4.0  Seifer Almasy                              {3}{R}       Legendary Creature
+4.0  Selfcraft Mechan                           {3}{U}       Artifact Creature
+4.0  Snort                                      {3}{R}       Sorcery
+4.0  Strongbox Raider                           {2}{R}{R}    Creature
+4.0  Summit Intimidator                         {3}{R}       Creature
+4.0  Summon: Esper Ramuh                        {2}{R}{R}    Enchantment Creature
+4.0  Summon: Esper Valigarmanda                 {3}{R}       Enchantment Creature
+4.0  Summon: G.F. Cerberus                      {2}{R}{R}    Enchantment Creature
+4.0  Tamiyo's Immobilizer                       {3}{U}       Artifact
+4.0  Tannuk, Steadfast Second                   {2}{R}{R}    Legendary Creature
+4.0  The Akroan War                             {3}{R}       Enchantment
+4.0  The Fire Crystal                           {2}{R}{R}    Legendary Artifact
+4.0  Traxos, Scourge of Kroog                   {4}          Legendary Artifact Creature
+4.0  Triton Waverider                           {3}{U}       Creature
+4.0  Uncharted Voyage                           {3}{U}       Instant
+4.0  Urabrask's Anointer                        {3}{R}       Artifact Creature
+4.0  Uthros Scanship                            {3}{U}       Artifact
+4.0  Vanish from Sight                          {3}{U}       Instant
+4.0  Voldaren Duelist                           {3}{R}       Creature
+4.0  Volley Veteran                             {3}{R}       Creature
+4.0  Vulshok Splitter                           {3}{R}       Artifact
+5.0  All Will Be One                            {3}{R}{R}    Enchantment
+5.0  Boilerbilges Ripper                        {4}{R}       Creature
+5.0  Boulderborn Dragon                         {5}          Artifact Creature
+5.0  Breaching Dragonstorm                      {4}{R}       Enchantment
+5.0  Cerebral Download                          {4}{U}       Instant
+5.0  Conduct Electricity                        {4}{R}       Instant
+5.0  Conjurer's Closet                          {5}          Artifact
+5.0  Constrictor Sage                           {4}{U}       Creature
+5.0  Court of Ire                               {3}{R}{R}    Enchantment
+5.0  Focus the Mind                             {4}{U}       Instant
+5.0  Furnace Strider                            {4}{R}       Creature
+5.0  Heroes of the Revel                        {4}{R}       Creature
+5.0  Iceridge Serpent                           {4}{U}       Creature
+5.0  Knightfisher                               {3}{U}{U}    Creature
+5.0  Light of Judgment                          {4}{R}       Instant
+5.0  Meldweb Strider                            {4}{U}       Artifact
+5.0  Mind Spiral                                {4}{U}       Sorcery
+5.0  Molten Rebuke                              {4}{R}       Sorcery
+5.0  Painter's Studio // Defaced Gallery        {2}{R} // {1}{R} Enchantment
+5.0  Quicksilver Fisher                         {3}{U}{U}    Creature
+5.0  Sandworm                                   {4}{R}       Creature
+5.0  Starbreach Whale                           {4}{U}       Creature
+5.0  Summon: Shiva                              {3}{U}{U}    Enchantment Creature
+5.0  Summon: Valefor                            {4}{U}       Enchantment Creature
+5.0  Tellah, Great Sage                         {3}{U}{R}    Legendary Creature
+5.0  The Eternity Elevator                      {5}          Legendary Artifact
+5.0  Thryx, the Sudden Storm                    {3}{U}{U}    Legendary Creature
+5.0  Twinflame Tyrant                           {3}{R}{R}    Creature
+5.0  Ultima, Origin of Oblivion                 {5}          Legendary Creature
+5.0  Unfathomable Truths                        {4}{U}       Instant
+5.0  Urabrask the Hidden                        {3}{R}{R}    Legendary Creature
+5.0  Vanquisher's Banner                        {5}          Artifact
+5.0  Vivisurgeon's Insight                      {3}{U}{U}    Sorcery
+6.0  Anticausal Vestige                         {6}          Creature
+6.0  Bedhead Beastie                            {4}{R}{R}    Creature
+6.0  Curator of Destinies                       {4}{U}{U}    Creature
+6.0  Daggermaw Megalodon                        {4}{U}{U}    Creature
+6.0  Daring Waverider                           {4}{U}{U}    Creature
+6.0  Dirgur Island Dragon // Skimming Strike    {5}{U} // {1}{U} Creature
+6.0  Dreamshaper Shaman                         {5}{R}       Enchantment Creature
+6.0  Duskmourn's Domination                     {4}{U}{U}    Enchantment
+6.0  Galvanizing Sawship                        {5}{R}       Artifact
+6.0  Grappling Kraken                           {4}{U}{U}    Creature
+6.0  Ice Flan                                   {4}{U}{U}    Creature
+6.0  Malevolent Chandelier                      {6}          Artifact Creature
+6.0  Marina Vendrell's Grimoire                 {5}{U}       Legendary Artifact
+6.0  Random Encounter                           {4}{R}{R}    Sorcery
+6.0  Sea God's Scorn                            {4}{U}{U}    Sorcery
+6.0  Territorial Bruntar                        {4}{R}{R}    Creature
+6.0  Triple Triad                               {3}{R}{R}{R} Enchantment
+7.0  Central Elevator // Promising Stairs       {3}{U} // {2}{U} Enchantment
+7.0  Jin-Gitaxias, Progress Tyrant              {5}{U}{U}    Legendary Creature
+7.0  Ovika, Enigma Goliath                      {5}{U}{R}    Legendary Creature
+7.0  Pinnacle Kill-Ship                         {7}          Artifact
+7.0  Smoky Lounge // Misty Salon                {2}{R} // {3}{U} Enchantment
+7.0  Travel the Overworld                       {5}{U}{U}    Sorcery
+8.0  Glassworks // Shattered Yard               {2}{R} // {4}{R} Enchantment
+8.0  Graaz, Unstoppable Juggernaut              {8}          Legendary Artifact Creature
+8.0  Meat Locker // Drowned Diner               {2}{U} // {3}{U}{U} Enchantment
+8.0  Warp World                                 {5}{R}{R}{R} Sorcery
+9.0  Bygone Colossus                            {9}          Artifact Creature
+9.0  Herigast, Erupting Nullkite                {9}          Legendary Creature
+9.0  Ticket Booth // Tunnel of Hate             {2}{R} // {4}{R}{R} Enchantment
+10.0  Jin-Gitaxias, Core Augur                   {8}{U}{U}    Legendary Creature
+12.0  Blightsteel Colossus                       {12}         Artifact Creature

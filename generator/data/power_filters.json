@@ -1,0 +1,59 @@
+{
+  "version": "2026-09-13",
+  "extra_turn_markers": ["extra turn"],
+  "fast_mana": [
+    "Mana Crypt",
+    "Mana Vault",
+    "Chrome Mox",
+    "Mox Diamond",
+    "Mox Opal",
+    "Jeweled Lotus",
+    "Grim Monolith",
+    "Lion's Eye Diamond"
+  ],
+  "heavy_tutors": [
+    "Demonic Tutor",
+    "Vampiric Tutor",
+    "Imperial Seal",
+    "Mystical Tutor",
+    "Enlightened Tutor",
+    "Worldly Tutor",
+    "Grim Tutor",
+    "Diabolic Intent"
+  ],
+  "game_changers": [
+    "Rhystic Study",
+    "Smothering Tithe",
+    "The One Ring",
+    "Cyclonic Rift",
+    "Fierce Guardianship",
+    "Deflecting Swat",
+    "Deadly Rollick",
+    "Teferi's Protection",
+    "Jeska's Will",
+    "Force of Will",
+    "Force of Negation",
+    "Mana Drain",
+    "Thassa's Oracle",
+    "Underworld Breach",
+    "Consecrated Sphinx",
+    "Bolas's Citadel",
+    "Ad Nauseam",
+    "Necropotence"
+  ],
+  "hard_stax": [
+    "Winter Orb",
+    "Static Orb",
+    "Stasis",
+    "Rule of Law",
+    "Arcane Laboratory",
+    "Drannith Magistrate",
+    "Grand Arbiter Augustin IV",
+    "Nether Void",
+    "Sphere of Resistance",
+    "Trinisphere",
+    "Thorn of Amethyst",
+    "Collector Ouphe",
+    "Null Rod"
+  ]
+}

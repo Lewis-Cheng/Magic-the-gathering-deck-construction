@@ -1,0 +1,10 @@
+# Local Python environment (PyTorch DLLs exceed GitHub's 100 MB file limit)
+.venv/
+
+# Price snapshots over GitHub's 100 MB limit
+ovika/rulebook/data/AllPrices.json.gz
+terra/rulebook/data/AllPrices.json.gz
+
+__pycache__/
+*.pyc
+.mplcache/

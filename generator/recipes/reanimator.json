@@ -1,0 +1,30 @@
+{
+  "theme": "reanimator",
+  "win_class": "combo",
+  "lands": 36,
+  "slots": {
+    "ramp": 9,
+    "draw": 8,
+    "interaction": 10,
+    "protection": 4,
+    "seed": 8,
+    "payoff": 10,
+    "enabler": 8,
+    "flex": 6
+  },
+  "queries": {
+    "ramp": "tag:ramp",
+    "draw": "tag:draw",
+    "interaction": "tag:removal OR tag:counter OR tag:wipe",
+    "protection": "tag:protection",
+    "seed": "graveyard OR discard OR mill",
+    "payoff": "return target creature card from your graveyard OR reanimate",
+    "enabler": "entomb OR mill OR discard",
+    "flex": "tag:tutor OR tag:draw"
+  },
+  "fallback_query": "graveyard OR tag:ramp OR tag:draw",
+  "banned_roles": {
+    "precon": ["extra-turn", "stax"],
+    "casual": ["extra-turn"]
+  }
+}

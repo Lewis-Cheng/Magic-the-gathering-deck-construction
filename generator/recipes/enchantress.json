@@ -1,0 +1,30 @@
+{
+  "theme": "enchantress",
+  "win_class": "combat",
+  "lands": 36,
+  "slots": {
+    "ramp": 8,
+    "draw": 10,
+    "interaction": 8,
+    "protection": 4,
+    "seed": 8,
+    "payoff": 12,
+    "enabler": 8,
+    "flex": 5
+  },
+  "queries": {
+    "ramp": "tag:ramp",
+    "draw": "tag:draw",
+    "interaction": "tag:removal OR tag:wipe OR tag:counter",
+    "protection": "tag:protection",
+    "seed": "tag:enchantment",
+    "payoff": "type:Enchantment",
+    "enabler": "tag:aura OR type:Enchantment",
+    "flex": "type:Enchantment OR tag:draw"
+  },
+  "fallback_query": "type:Enchantment OR tag:ramp",
+  "banned_roles": {
+    "precon": ["extra-turn", "stax"],
+    "casual": ["extra-turn"]
+  }
+}
