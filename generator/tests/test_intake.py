@@ -11,10 +11,10 @@ def test_missing_budget_does_not_default():
     assert ei.value.code == "missing_budget"
 
 
-def test_missing_theme():
+def test_missing_win_condition():
     with pytest.raises(IntakeError) as ei:
         parse({"commander": "Torbran, Thane of Red Fell", "budget_usd": 50})
-    assert ei.value.code == "missing_theme"
+    assert ei.value.code == "missing_win_condition"
 
 
 def test_missing_commander():
@@ -23,10 +23,10 @@ def test_missing_commander():
     assert ei.value.code == "missing_commander"
 
 
-def test_unknown_theme():
-    with pytest.raises(IntakeError) as ei:
-        parse({"commander": "Torbran, Thane of Red Fell", "theme": "convoke", "budget_usd": 50})
-    assert ei.value.code == "unknown_theme"
+def test_free_text_win_condition_uses_neutral_shell(oracle):
+    inn = parse({"commander": "Torbran, Thane of Red Fell", "win_condition": "burn the table", "budget_usd": 50})
+    assert inn.win_condition == "burn the table"
+    assert inn.theme == "midrange"
 
 
 def test_budget_non_positive():

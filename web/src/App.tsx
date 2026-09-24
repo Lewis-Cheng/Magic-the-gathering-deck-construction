@@ -1,13 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { generateDeck, searchCommanders, swapCard, toMtgo, type CardRow, type Deck } from "./api";
 
-const THEMES = ["midrange", "tokens", "spellslinger", "enchantress", "voltron", "reanimator", "stax"] as const;
-
 export default function App() {
   const [q, setQ] = useState("");
   const [hits, setHits] = useState<{ name: string; color_identity: string[] }[]>([]);
   const [commander, setCommander] = useState("");
-  const [theme, setTheme] = useState("");
+  const [winCondition, setWinCondition] = useState("");
   const [budget, setBudget] = useState<number | "">("");
   const [perCard, setPerCard] = useState<number | "">("");
   const [power, setPower] = useState("casual");
@@ -19,7 +17,7 @@ export default function App() {
   const [swaps, setSwaps] = useState<CardRow[]>([]);
   const [copied, setCopied] = useState(false);
 
-  const ready = Boolean(commander && theme && budget && Number(budget) > 0);
+  const ready = Boolean(commander && winCondition.trim() && budget && Number(budget) > 0);
 
   useEffect(() => {
     if (q.trim().length < 2) {
@@ -41,7 +39,7 @@ export default function App() {
     try {
       const body: Record<string, unknown> = {
         commander,
-        theme,
+        win_condition: winCondition.trim(),
         budget_usd: Number(budget),
         power_level: power,
       };
@@ -129,16 +127,14 @@ export default function App() {
           </div>
         </label>
 
-        <div>
-          Theme
-          <div className="chips">
-            {THEMES.map((t) => (
-              <button key={t} className={theme === t ? "on" : ""} type="button" onClick={() => setTheme(t)}>
-                {t}
-              </button>
-            ))}
-          </div>
-        </div>
+        <label>
+          Win condition
+          <input
+            value={winCondition}
+            placeholder="Your plan, in your words"
+            onChange={(e) => setWinCondition(e.target.value)}
+          />
+        </label>
 
         <label>
           Budget USD (required, no default)
@@ -177,7 +173,7 @@ export default function App() {
         <button className="primary" disabled={!ready || busy} onClick={onGenerate}>
           {busy ? "Generating…" : "Generate"}
         </button>
-        {!ready && <span>Generate stays off until commander, theme, and budget are set. No Ovika / $1000 default.</span>}
+        {!ready && <span>Generate stays off until commander, win condition, and budget are set.</span>}
         {err && <div className="error">{err}</div>}
       </div>
 

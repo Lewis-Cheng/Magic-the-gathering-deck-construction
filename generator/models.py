@@ -73,4 +73,5 @@ class Intake:
     land_count: Optional[int] = None
     exclude: list[str] = field(default_factory=list)
     must_include: list[str] = field(default_factory=list)
+    win_condition: str = ""
     sim: dict[str, Any] = field(default_factory=lambda: {"enabled": False})

@@ -1,4 +1,4 @@
-"""Reject incomplete jobs. No Ovika / $1000 / convoke defaults."""
+"""Reject incomplete jobs. Commander and win condition come from the request."""
 
 from __future__ import annotations
 
@@ -18,18 +18,29 @@ class IntakeError(ValueError):
         return {"error": self.code, "detail": self.message}
 
 
+def _shell_for(win: str) -> str:
+    """Slot-count shell only. The user's sentence is not replaced by a lab deck."""
+    text = win.strip().lower()
+    if text in THEMES_V1:
+        return text
+    for name in THEMES_V1:
+        if name in text:
+            return name
+    return "midrange"
+
+
 def parse(body: dict[str, Any]) -> Intake:
     if not isinstance(body, dict):
         raise IntakeError("body must be a JSON object")
 
     commander = body.get("commander")
-    theme = body.get("theme")
+    win = body.get("win_condition") or body.get("theme")
     budget = body.get("budget_usd")
 
     if not commander or not str(commander).strip():
         raise IntakeError("commander is required (no default)", "missing_commander")
-    if not theme or not str(theme).strip():
-        raise IntakeError("theme is required (no default)", "missing_theme")
+    if not win or not str(win).strip():
+        raise IntakeError("win_condition is required (no default)", "missing_win_condition")
     if budget is None:
         raise IntakeError("budget_usd is required (no default of 1000)", "missing_budget")
     try:
@@ -39,11 +50,7 @@ def parse(body: dict[str, Any]) -> Intake:
     if budget_f <= 0:
         raise IntakeError("budget_usd must be > 0", "invalid_budget")
 
-    theme_s = str(theme).strip().lower()
-    if theme_s.startswith("other:"):
-        raise IntakeError("theme other:<slug> requires a written recipe in the request (V1: pick a shipped theme)", "unknown_theme")
-    if theme_s not in THEMES_V1:
-        raise IntakeError(f"unknown theme: {theme}", "unknown_theme")
+    theme_s = _shell_for(str(win))
 
     power = str(body.get("power_level") or "casual").strip().lower()
     if power not in POWER_LEVELS:
@@ -82,5 +89,6 @@ def parse(body: dict[str, Any]) -> Intake:
         land_count=land_i,
         exclude=exclude,
         must_include=must,
+        win_condition=str(win).strip(),
         sim=sim,
     )

@@ -2,8 +2,7 @@
 .venv/
 
 # Price snapshots over GitHub's 100 MB limit
-ovika/rulebook/data/AllPrices.json.gz
-terra/rulebook/data/AllPrices.json.gz
+simulator/rulebook/data/AllPrices.json.gz
 
 __pycache__/
 *.pyc

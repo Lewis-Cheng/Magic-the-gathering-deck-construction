@@ -15,7 +15,7 @@ def test_oracle_require_not_tuple_tags(oracle):
 
 
 def test_wand_of_the_worldsoul_fails_ur(oracle):
-    cmd = "Ovika, Enigma Goliath"
+    cmd = "Torbran, Thane of Red Fell"
     ninety_nine = ["Island"] * 49 + ["Mountain"] * 49 + ["Wand of the Worldsoul"]
     result = check_deck(cmd, ninety_nine)
     assert result["ok"] is False
@@ -58,7 +58,7 @@ def test_json_names_only_not_python_tuples():
 
 
 def test_lab_convert_is_ast_not_pool():
-    path = Path(__file__).resolve().parents[2] / "ovika" / "deck_v12.py"
+    path = Path(__file__).resolve().parents[2] / "simulator" / "fixtures" / "sample_deck.py"
     if not path.exists():
         return
     data = lab_py_to_names(path)
