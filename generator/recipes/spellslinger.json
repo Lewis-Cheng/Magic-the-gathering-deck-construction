@@ -1,0 +1,30 @@
+{
+  "theme": "spellslinger",
+  "win_class": "combat",
+  "lands": 35,
+  "slots": {
+    "ramp": 8,
+    "draw": 12,
+    "interaction": 12,
+    "protection": 4,
+    "seed": 6,
+    "payoff": 10,
+    "enabler": 6,
+    "flex": 6
+  },
+  "queries": {
+    "ramp": "tag:ramp",
+    "draw": "tag:draw tag:spell",
+    "interaction": "tag:counter OR tag:removal",
+    "protection": "tag:protection",
+    "seed": "type:Instant OR type:Sorcery",
+    "payoff": "prowess OR Magecraft OR copy",
+    "enabler": "tag:spell tag:draw",
+    "flex": "type:Instant OR type:Sorcery"
+  },
+  "fallback_query": "type:Instant OR type:Sorcery OR tag:ramp",
+  "banned_roles": {
+    "precon": ["extra-turn", "stax"],
+    "casual": ["extra-turn"]
+  }
+}

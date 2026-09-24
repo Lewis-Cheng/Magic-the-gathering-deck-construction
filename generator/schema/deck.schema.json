@@ -1,0 +1,61 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "CommanderDeckList",
+  "type": "object",
+  "required": [
+    "commander",
+    "theme",
+    "budget_usd",
+    "cards",
+    "total_usd",
+    "legality",
+    "theme_fill",
+    "confidence"
+  ],
+  "properties": {
+    "commander": { "type": "string", "minLength": 1 },
+    "theme": { "type": "string" },
+    "budget_usd": { "type": "number" },
+    "power_level": { "type": "string" },
+    "total_usd": { "type": "number" },
+    "cards": {
+      "type": "array",
+      "minItems": 99,
+      "maxItems": 99,
+      "items": {
+        "type": "object",
+        "required": ["name", "slot"],
+        "properties": {
+          "name": { "type": "string" },
+          "slot": { "type": "string" },
+          "price_usd": { "type": ["number", "null"] },
+          "reason": { "type": "string" }
+        }
+      }
+    },
+    "lands": { "type": "integer" },
+    "legality": {
+      "type": "object",
+      "properties": {
+        "ok": { "type": "boolean" },
+        "violations": { "type": "array" }
+      }
+    },
+    "theme_fill": {
+      "type": "object",
+      "properties": {
+        "ok": { "type": "boolean" },
+        "missing_slots": { "type": "array" }
+      }
+    },
+    "coverage": { "type": "object" },
+    "confidence": { "type": "string" },
+    "notes": { "type": "array", "items": { "type": "string" } },
+    "prices_as_of": { "type": ["string", "null"] },
+    "ban_list_version": { "type": "string" },
+    "tagger_version": { "type": "string" }
+  },
+  "not": {
+    "required": ["win_rate"]
+  }
+}

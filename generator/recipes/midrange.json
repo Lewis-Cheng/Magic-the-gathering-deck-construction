@@ -1,0 +1,30 @@
+{
+  "theme": "midrange",
+  "win_class": "combat",
+  "lands": 36,
+  "slots": {
+    "ramp": 10,
+    "draw": 10,
+    "interaction": 12,
+    "protection": 4,
+    "seed": 4,
+    "payoff": 8,
+    "enabler": 6,
+    "flex": 9
+  },
+  "queries": {
+    "ramp": "tag:ramp",
+    "draw": "tag:draw",
+    "interaction": "tag:counter OR tag:wipe OR tag:removal",
+    "protection": "tag:protection",
+    "seed": "tag:draw OR tag:ramp",
+    "payoff": "type:Creature",
+    "enabler": "tag:rock OR tag:ramp",
+    "flex": "tag:draw OR tag:ramp OR tag:removal"
+  },
+  "fallback_query": "tag:ramp OR tag:draw OR tag:rock",
+  "banned_roles": {
+    "precon": ["extra-turn", "stax"],
+    "casual": ["extra-turn"]
+  }
+}

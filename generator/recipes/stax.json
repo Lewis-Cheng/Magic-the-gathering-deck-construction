@@ -1,0 +1,30 @@
+{
+  "theme": "stax",
+  "win_class": "stax",
+  "lands": 36,
+  "slots": {
+    "ramp": 10,
+    "draw": 8,
+    "interaction": 14,
+    "protection": 4,
+    "seed": 6,
+    "payoff": 10,
+    "enabler": 6,
+    "flex": 5
+  },
+  "queries": {
+    "ramp": "tag:ramp",
+    "draw": "tag:draw",
+    "interaction": "tag:stax OR tag:counter OR tag:wipe",
+    "protection": "tag:protection",
+    "seed": "tag:stax",
+    "payoff": "tag:stax",
+    "enabler": "tag:rock OR tag:stax",
+    "flex": "tag:stax OR tag:ramp"
+  },
+  "fallback_query": "tag:stax OR tag:ramp OR tag:rock",
+  "banned_roles": {
+    "precon": ["extra-turn"],
+    "casual": ["extra-turn"]
+  }
+}
