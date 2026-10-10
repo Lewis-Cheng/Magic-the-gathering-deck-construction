@@ -11,6 +11,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set
 
 DATA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "rulebook", "data", "AtomicCards.json.gz")
+EXTRA_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "rulebook", "data", "oracle_extras.json")
 POOL_PATH = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "ur_pool.json")
 
 _MP_RE = re.compile(r"\{([^}]*)\}")
@@ -104,35 +105,45 @@ class Oracle:
             data = json.load(f)["data"]
         self._by_name: Dict[str, CardDef] = {}
         for name, printings in data.items():
-            c = printings[0]
-            mcost = parse_mana_cost(c.get("manaCost"))
-            types = {t for t in c.get("types", [])}
-            supertypes = {t for t in c.get("supertypes", [])}
-            subtypes = {t for t in c.get("subtypes", [])}
-            colors = {x for x in c.get("colors", [])}
-            ci = {x for x in c.get("colorIdentity", [])}
-            self._by_name[name] = CardDef(
-                name=name,
-                mana_cost=mcost,
-                mana_cost_str=c.get("manaCost") or "",
-                types=types,
-                supertypes=supertypes,
-                subtypes=subtypes,
-                text=c.get("text") or "",
-                power=str(c.get("power")) if c.get("power") is not None else None,
-                toughness=str(c.get("toughness")) if c.get("toughness") is not None else None,
-                keywords={k for k in c.get("keywords", [])},
-                colors=colors,
-                color_identity=ci,
-                is_land="Land" in types,
-                is_creature="Creature" in types,
-                is_artifact="Artifact" in types,
-                is_enchantment="Enchantment" in types,
-                is_instant="Instant" in types,
-                is_sorcery="Sorcery" in types,
-                is_planeswalker="Planeswalker" in types,
-                is_legendary="Legendary" in supertypes,
-            )
+            self._by_name[name] = self._from_printing(name, printings[0])
+        if os.path.exists(EXTRA_PATH):
+            with open(EXTRA_PATH, encoding="utf-8") as f:
+                extra = json.load(f)
+            for name, printings in extra.items():
+                if name not in self._by_name:
+                    face = printings[0] if isinstance(printings, list) else printings
+                    self._by_name[name] = self._from_printing(name, face)
+
+    @staticmethod
+    def _from_printing(name: str, c: dict) -> CardDef:
+        mcost = parse_mana_cost(c.get("manaCost"))
+        types = {t for t in c.get("types", [])}
+        supertypes = {t for t in c.get("supertypes", [])}
+        subtypes = {t for t in c.get("subtypes", [])}
+        colors = {x for x in c.get("colors", [])}
+        ci = {x for x in c.get("colorIdentity", [])}
+        return CardDef(
+            name=name,
+            mana_cost=mcost,
+            mana_cost_str=c.get("manaCost") or "",
+            types=types,
+            supertypes=supertypes,
+            subtypes=subtypes,
+            text=c.get("text") or "",
+            power=str(c.get("power")) if c.get("power") is not None else None,
+            toughness=str(c.get("toughness")) if c.get("toughness") is not None else None,
+            keywords={k for k in c.get("keywords", [])},
+            colors=colors,
+            color_identity=ci,
+            is_land="Land" in types,
+            is_creature="Creature" in types,
+            is_artifact="Artifact" in types,
+            is_enchantment="Enchantment" in types,
+            is_instant="Instant" in types,
+            is_sorcery="Sorcery" in types,
+            is_planeswalker="Planeswalker" in types,
+            is_legendary="Legendary" in supertypes,
+        )
 
     def get(self, name: str) -> Optional[CardDef]:
         c = self._by_name.get(name)

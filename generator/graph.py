@@ -34,9 +34,21 @@ def suggestions_for(commander: str, theme: str, ci: set[str], cards: list[CardRo
             continue
         if not set(ic.roles) & set(family):
             thin.append(row)
+    from generator.atlas import get_atlas
+
+    atlas = get_atlas()
+    seeds = [c.name for c in cards] + [commander]
+    nearby = [name for name, _dist in atlas.neighbors(seeds, ci=ci, limit=200, lens="synergy", exclude=present)]
     out: list[dict[str, Any]] = []
     for row in thin[:8]:
-        hits = index.search(ci, row.slot, f"tag:{family[0]}", limit=40)
+        hits = []
+        for name in nearby:
+            h = index.by_name.get(name)
+            if h is None or h.is_land:
+                continue
+            if family[0] not in h.roles and row.slot not in h.roles:
+                continue
+            hits.append(h)
         for h in hits:
             if h.name in present:
                 continue
@@ -49,7 +61,7 @@ def suggestions_for(commander: str, theme: str, ci: set[str], cards: list[CardRo
                     "add": h.name,
                     "slot": row.slot,
                     "price_usd": price,
-                    "reason": "theme-family graph suggestion (not auto-applied)",
+                    "reason": "Deckmates neighbor on the Lantern map (not auto-applied)",
                 }
             )
             present.add(h.name)

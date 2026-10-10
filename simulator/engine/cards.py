@@ -6,6 +6,7 @@ activated abilities (602) are resolved by the engine in game.py.
 
 from __future__ import annotations
 
+import re
 from typing import Callable, List, Optional, Set, Tuple
 
 from .game import Game, Permanent, Player, StackObject, Trigger
@@ -24,24 +25,31 @@ def _side_none(game, pl, perm):
 def mana_abilities(game: Game, perm: Permanent) -> List[Tuple[int, object, Callable]]:
     n = perm.card.name
     out = []
+    pl = perm.controller
+
+    def _pain(g, p, pm):
+        p.life -= 1
+
     if perm.card.is_land:
         if n == "Mountain":
             out.append((1, ["R"], _side_none))
         elif n == "Island":
             out.append((1, ["U"], _side_none))
         elif n in ("Command Tower", "Path of Ancestry", "Command Bridge"):
-            out.append((1, "any", _side_none))
+            # Only commander's color identity — not every color.
+            out.append((1, "commander", _side_none))
         elif n == "Exotic Orchard":
             colors = set()
-            for opp in game.opponents(perm.controller):
+            for opp in game.opponents(pl):
                 for p in opp.battlefield:
                     if p.card.is_land:
-                        colors |= set(_land_colors(p.card.name))
-            out.append((1, list(colors) or ["C"], _side_none))
+                        colors |= set(_producible_colors(game, p))
+            colors -= {"C", "*"}
+            out.append((1, list(colors) if colors else ["C"], _side_none))
         elif n in ("Baron, Airship Kingdom", "Peculiar Lighthouse", "Swiftwater Cliffs"):
             out.append((1, ["U", "R"], _side_none))
         elif n == "Shivan Reef":
-            out.append((1, ["U", "R"], lambda g, pl, perm: (g.deal_damage(perm, pl, 1), pl.life)))
+            out.append((1, ["U", "R"], lambda g, pl_, perm_: (g.deal_damage(perm_, pl_, 1), pl_.life)))
         elif n == "Jidoor, Aristocratic Capital // Overture":
             out.append((1, ["U"], _side_none))
         elif n == "Crossroads Village":
@@ -52,56 +60,126 @@ def mana_abilities(game: Game, perm: Permanent) -> List[Tuple[int, object, Calla
             out.append((1, ["C"], _side_none))
         elif n == "The Autonomous Furnace":
             out.append((1, ["R"], _side_none))
-        # Chromatic Lantern: lands you control tap for any color (static)
-        for q in perm.controller.battlefield:
+        # Chromatic Lantern / Dryad: lands tap for any color
+        for q in pl.battlefield:
             if q.card.name == "Chromatic Lantern" and q.card.is_artifact:
-                out = [(amt, "any", side) for (amt, colors, side) in out]
+                out = [(amt, "any", side) for (amt, colors, side) in out] if out else out
     elif perm.card.is_artifact:
         if n == "Sol Ring":
             out.append((2, ["C"], _side_none))
         elif n == "Arcane Signet":
-            out.append((1, "any", _side_none))
+            out.append((1, "commander", _side_none))
         elif n == "Everflowing Chalice":
             out.append((perm.counters.get("charge", 0), ["C"], _side_none))
         elif n == "Pristine Talisman":
-            out.append((1, ["C"], lambda g, pl, perm: setattr(pl, "life", pl.life + 1)))
+            out.append((1, ["C"], lambda g, pl_, perm_: setattr(pl_, "life", pl_.life + 1)))
         elif n == "The Eternity Elevator":
             out.append((3, ["C"], _side_none))
         elif n == "Chromatic Lantern":
             out.append((1, "any", _side_none))
         elif n == "Fellwar Stone":
             colors = set()
-            for opp in game.opponents(perm.controller):
+            for opp in game.opponents(pl):
                 for p in opp.battlefield:
                     if p.card.is_land:
-                        colors |= set(_land_colors(p.card.name))
-            out.append((1, list(colors) or ["C"], _side_none))
+                        colors |= set(_producible_colors(game, p))
+            colors -= {"C", "*"}
+            out.append((1, list(colors) if colors else ["C"], _side_none))
         elif n == "Mind Stone":
             out.append((1, ["C"], _side_none))
         elif n == "Thran Dynamo":
             out.append((3, ["C"], _side_none))
         elif n == "Commander's Sphere":
+            out.append((1, "commander", _side_none))
+        elif n in _TALISMAN_COLORS:
+            cols = _TALISMAN_COLORS[n]
+            out.append((1, ["C"], _side_none))
+            out.append((1, cols, _pain))
+        elif n == "Lotus Petal":
+            def _petal(g, pl_, pm):
+                g.sacrifice(pl_, pm)
+            out.append((1, "any", _petal))
+
+    # Named creature mana abilities
+    if n == "Sanctum Weaver":
+        x = sum(1 for q in pl.battlefield if q.card.is_enchantment)
+        if x > 0:
+            out.append((x, "any", _side_none))
+    elif n == "Citanul Stalwart":
+        # {T}, Tap an untapped artifact or creature you control: Add one mana of any color.
+        other = [q for q in pl.battlefield
+                 if q is not perm and not q.tapped and (q.is_creature() or q.card.is_artifact)]
+        if other:
+            def _tap_other(g, pl_, pm, other=other):
+                other[0].tapped = True
+            out.append((1, "any", _tap_other))
+    elif n in ("Birds of Paradise", "Llanowar Elves", "Fyndhorn Elves", "Elvish Mystic",
+               "Avacyn's Pilgrim", "Delighted Halfling"):
+        if n == "Llanowar Elves" or n == "Fyndhorn Elves" or n == "Elvish Mystic":
+            out.append((1, ["G"], _side_none))
+        elif n == "Avacyn's Pilgrim":
+            out.append((1, ["W"], _side_none))
+        else:
             out.append((1, "any", _side_none))
-        elif n == "Skirk Prospector" and perm.card.is_creature:
-            # Sacrifice a Goblin: Add {R} -- mana ability (605.1b)
-            if any(q.card.name == "Skirk Prospector" and q is not perm for q in perm.controller.battlefield):
-                pass
-            out.append((1, ["R"], lambda g, pl, perm: None))
-    # Skirk Prospector is a creature; handle via its own entry
-    if perm.card.name == "Skirk Prospector":
-        out.append((1, ["R"], lambda g, pl, perm: None))
+    elif n == "Skirk Prospector":
+        out.append((1, ["R"], lambda g, pl_, perm_: None))
+
     if not out:
         from .generic import generic_mana_abilities
         out = generic_mana_abilities(game, perm)
     # Enduring Vitality: creatures you control have "{T}: Add one mana of any color"
     if perm.is_creature() and not out and any(
-            q.card.name == "Enduring Vitality" for q in perm.controller.battlefield):
+            q.card.name == "Enduring Vitality" for q in pl.battlefield):
         out.append((1, "any", _side_none))
-    # Dryad of the Ilysian Grove: lands you control tap for any color (simplified static)
+    # Dryad of the Ilysian Grove: lands you control are every basic land type
     if perm.card.is_land and any(
-            q.card.name == "Dryad of the Ilysian Grove" for q in perm.controller.battlefield):
-        out = [(amt, "any", side) for (amt, colors, side) in out]
+            q.card.name == "Dryad of the Ilysian Grove" for q in pl.battlefield):
+        out = [(amt, "any", side) for (amt, colors, side) in out] if out else [(1, "any", _side_none)]
     return out
+
+
+_TALISMAN_COLORS = {
+    "Talisman of Conviction": ["W", "R"],
+    "Talisman of Creativity": ["U", "R"],
+    "Talisman of Dominance": ["U", "B"],
+    "Talisman of Indulgence": ["B", "G"],
+    "Talisman of Progress": ["W", "U"],
+    "Talisman of Hierarchy": ["W", "B"],
+    "Talisman of Unity": ["W", "G"],
+    "Talisman of Impulse": ["R", "G"],
+    "Talisman of Curiosity": ["U", "G"],
+    "Talisman of Resilience": ["B", "G"],
+}
+
+
+def _producible_colors(game: Game, perm: Permanent) -> List[str]:
+    """Colors this land can produce (for Exotic Orchard / Fellwar Stone)."""
+    name = perm.card.name
+    basics = {
+        "Plains": ["W"], "Island": ["U"], "Swamp": ["B"],
+        "Mountain": ["R"], "Forest": ["G"], "Wastes": ["C"],
+    }
+    if name in basics:
+        return basics[name]
+    t = (perm.card.text or "").lower()
+    if "commander's color identity" in t:
+        ci = list(getattr(perm.controller.commander, "color_identity", set()) or [])
+        return ci or ["C"]
+    if "one mana of any color" in t or "mana of any color" in t:
+        return list("WUBRG")
+    # Dual / shock style: Add {G} or {U}
+    m = re.search(r"add ([^.\n]*)", t)
+    if m:
+        from .generic import _mana_from_phrase
+        res = _mana_from_phrase(m.group(1))
+        if res is not None:
+            n, colors = res
+            if colors == "any":
+                return list("WUBRG")
+            return list(colors)
+    # Fallback: color identity of the land card itself
+    ci = list(getattr(perm.card, "color_identity", set()) or [])
+    return ci if ci else ["C"]
 
 
 def _land_colors(name: str) -> List[str]:
@@ -112,7 +190,7 @@ def _land_colors(name: str) -> List[str]:
     if name in basics:
         return basics[name]
     if name in ("Command Tower", "Path of Ancestry", "Command Bridge"):
-        return ["W", "U", "B", "R", "G"]
+        return ["W", "U", "B", "R", "G"]  # legacy; prefer _producible_colors
     return ["C"]
 
 
@@ -164,6 +242,22 @@ def spell_mv(obj: StackObject) -> int:
 
 def on_cast(game: Game, pl: Player, obj: StackObject) -> None:
     card = obj.card
+    # ---- Enchantress package: cast enchantment → draw ----
+    if card.is_enchantment:
+        _ENCHANTRESS_CAST = {
+            "Sythis, Harvest's Hand",
+            "Enchantress's Presence",
+            "Mesa Enchantress",
+            "Verduran Enchantress",
+            "Argothian Enchantress",
+            "Satyr Enchanter",
+        }
+        for q in list(pl.battlefield):
+            if q.card.name in _ENCHANTRESS_CAST:
+                def _edraw(game_: Game, t: Trigger, _pl=pl, src=q.card.name):
+                    game_.draw(_pl, 1)
+                    game_.log(f"      {src}: {_pl.name} draws 1")
+                game.queue_trigger(q, pl, f"{q.card.name}: draw", _edraw)
     # ---- Shark Typhoon: shark per noncreature spell ----
     if any(q.card.name == "Shark Typhoon" for q in pl.battlefield) and not card.is_creature:
         mv = spell_mv(obj)
@@ -240,9 +334,93 @@ def on_cast(game: Game, pl: Player, obj: StackObject) -> None:
 # Enter-the-battlefield triggers and land ETB effects
 # ---------------------------------------------------------------------------
 
+def _nissa_landfall(game: Game, pl: Player, src: Permanent) -> None:
+    """Nissa, Leyline Tamer: landfall draws, and the first resolution each turn
+    reveals until a creature and puts it onto the battlefield."""
+    game.draw(pl, 1)
+    key = f"nissa_{id(src)}_{game.turn_no}"
+    if game.flags.get(key):
+        game.log("      Nissa, Leyline Tamer: landfall draw")
+        return
+    game.flags[key] = True
+    bottom: list = []
+    hit = None
+    while pl.library:
+        card = pl.library.pop()
+        if card.is_creature:
+            hit = card
+            break
+        bottom.append(card)
+    game.rng.shuffle(bottom)
+    pl.library = bottom + pl.library
+    if hit is None:
+        game.log("      Nissa, Leyline Tamer: landfall draw, no creature left")
+        return
+    creature = Permanent(
+        card=hit, controller=pl, owner=pl,
+        controlled_since_turn=game.turn_no, summon_sick=True,
+    )
+    pl.battlefield.append(creature)
+    game.log(f"      Nissa, Leyline Tamer: landfall draw, put {hit.name} onto the battlefield")
+    on_enter(game, creature)
+
+
 def on_enter(game: Game, perm: Permanent) -> None:
     n = perm.card.name
     pl = perm.controller
+    if n == "Archon of Cruelty":
+        for opp in [p for p in game.players if p is not pl and p.alive]:
+            victims = [q for q in opp.battlefield if q.is_creature() or q.card.is_planeswalker]
+            if victims:
+                game.destroy(victims[0], "Archon of Cruelty")
+            if opp.hand:
+                opp.discard_card(opp.hand[0])
+            game.lose_life(opp, 3)
+        game.draw(pl, 1)
+        pl.life += 3
+        game.log("      Archon of Cruelty: each opponent sacrifices, discards, and loses 3")
+    if perm.card.is_land:
+        for src in [q for q in pl.battlefield if q.card.name == "Nissa, Leyline Tamer"]:
+            _nissa_landfall(game, pl, src)
+    # ---- Terra, Magical Adept: mill 5, put up to one enchantment into hand ----
+    if n == "Terra, Magical Adept" or (n.startswith("Terra,") and "Adept" in n):
+        milled = []
+        for _ in range(5):
+            if pl.library:
+                c = pl.library.pop()
+                pl.graveyard.append(c)
+                milled.append(c)
+        pick = next((c for c in milled if c.is_enchantment), None)
+        if pick is not None:
+            pl.graveyard.remove(pick)
+            pl.hand.append(pick)
+            game.log(f"      Terra mills 5; returns {pick.name} to hand")
+        else:
+            game.log("      Terra mills 5; no enchantment")
+    # ---- Constellation / enchantment ETB draw engines ----
+    if perm.card.is_enchantment or n == "Eidolon of Blossoms":
+        for q in list(pl.battlefield):
+            # Eidolon triggers on itself and other enchantments
+            if q.card.name == "Eidolon of Blossoms" and (q is perm or perm.card.is_enchantment):
+                def _eid(game_: Game, t: Trigger, _pl=pl):
+                    game_.draw(_pl, 1)
+                    game_.log(f"      Eidolon of Blossoms: constellation draw")
+                game.queue_trigger(q, pl, "Eidolon of Blossoms: constellation", _eid)
+            elif q is not perm and q.card.name == "Setessan Champion" and perm.card.is_enchantment:
+                def _const(game_: Game, t: Trigger, _pl=pl, src=q):
+                    src.counters["+1/+1"] = src.counters.get("+1/+1", 0) + 1
+                    game_.draw(_pl, 1)
+                    game_.log("      Setessan Champion: constellation")
+                game.queue_trigger(q, pl, "Setessan Champion: constellation", _const)
+    if perm.is_creature():
+        for q in list(pl.battlefield):
+            if q.card.name == "Aura Shards":
+                tgts = [x for opp in game.opponents(pl) for x in opp.battlefield
+                        if x.card.is_artifact or x.card.is_enchantment]
+                if tgts:
+                    def _as(game_: Game, t: Trigger, tgt=tgts[0]):
+                        game_.destroy(tgt, "Aura Shards")
+                    game.queue_trigger(q, pl, "Aura Shards: destroy", _as)
     if n in ("Swiftwater Cliffs", "Adventurer's Inn"):
         pl.life += 1 if n == "Swiftwater Cliffs" else 2
         game.log(f"        {n}: {pl.name} gains life")
@@ -321,6 +499,17 @@ def on_death(game: Game, perm: Permanent) -> None:
 
 def on_attackers_declared(game: Game, pl: Player, attackers: List[Permanent]) -> None:
     for a in attackers:
+        if a.card.name == "Archon of Cruelty":
+            for opp in [p for p in game.players if p is not pl and p.alive]:
+                victims = [q for q in opp.battlefield if q.is_creature() or q.card.is_planeswalker]
+                if victims:
+                    game.destroy(victims[0], "Archon of Cruelty")
+                if opp.hand:
+                    opp.discard_card(opp.hand[0])
+                game.lose_life(opp, 3)
+            game.draw(pl, 1)
+            pl.life += 3
+            game.log("      Archon of Cruelty attacks: each opponent sacrifices, discards, and loses 3")
         if a.card.name == "Goblin Rabblemaster":
             n = sum(1 for q in attackers if q is not a and "Goblin" in (q.card.subtypes | {q.card.name}))
             a.eot_power_mod += n
@@ -335,6 +524,15 @@ def on_tokens_created(game: Game, controller, made: list) -> None:
     if not made:
         return
     mana_echoes_trigger(game, made[0], len(made))
+    # Impact Tremors and the same sentence: 1 damage to each opponent per creature token.
+    for perm in controller.battlefield:
+        text = (perm.card.text or "").lower()
+        if "whenever a creature" in text and "enters" in text and "1 damage to each opponent" in text:
+            for opp in game.players:
+                if opp is not controller and opp.alive:
+                    game.lose_life(opp, len(made))
+            game.log(f"      {perm.name}: {len(made)} damage to each opponent")
+            break
 
 
 def mana_echoes_trigger(game: Game, perm: Permanent, count: int = 1) -> None:
@@ -619,6 +817,18 @@ def upkeep_triggers(game: Game, pl: Player) -> None:
                 game.log(f"      {pl.name} pays Mogg War Marshal echo")
             else:
                 game.sacrifice(pl, perm)
+        if n == "Starfield of Nyx":
+            # return target enchantment from GY to battlefield
+            ench = next((c for c in pl.graveyard if c.is_enchantment), None)
+            if ench is not None:
+                def _sf(game_: Game, t: Trigger, card=ench, _pl=pl):
+                    if card in _pl.graveyard:
+                        _pl.graveyard.remove(card)
+                        p = Permanent(card=card, controller=_pl, owner=_pl)
+                        _pl.battlefield.append(p)
+                        on_enter(game_, p)
+                        game_.log(f"      Starfield of Nyx returns {card.name}")
+                game.queue_trigger(perm, pl, "Starfield of Nyx: return enchantment", _sf)
     # rebound: cast exiled card free (702.94)
     rb = game.flags.pop(f"{pl.name}_rebound", None)
     if rb is not None:
@@ -801,19 +1011,41 @@ def activatable(game: Game, pl: Player) -> List[Tuple[str, Callable]]:
 # Equipment modifiers
 # ---------------------------------------------------------------------------
 
+def _static_anthem(game: Game, perm: Permanent) -> tuple[int, int]:
+    """Static 'creatures you control get +N/+N' and opponent '-N/-N'. Triggered pumps are skipped."""
+    power = tough = 0
+    if "Goblin" in perm.card.types or "Goblin" in perm.card.subtypes:
+        n = sum(1 for q in perm.controller.battlefield if q.card.name == "Obelisk of Urd")
+        power += 2 * n
+        tough += 2 * n
+    for q in perm.controller.battlefield:
+        for sentence in (q.card.text or "").lower().split("."):
+            if "whenever" in sentence:
+                continue
+            m = re.search(r"creatures you control get \+(\d+)/\+(\d+)", sentence)
+            if m:
+                power += int(m.group(1))
+                tough += int(m.group(2))
+    for pl in game.players:
+        if pl is perm.controller:
+            continue
+        for q in pl.battlefield:
+            for sentence in (q.card.text or "").lower().split("."):
+                if "whenever" in sentence:
+                    continue
+                m = re.search(r"creatures your opponents control get -(\d+)/-(\d+)", sentence)
+                if m:
+                    power -= int(m.group(1))
+                    tough -= int(m.group(2))
+    return power, tough
+
+
 def anthem_power_mod(game: Game, perm: Permanent) -> int:
-    """Obelisk of Urd: +2/+2 to chosen-type (Goblin) creatures."""
-    if "Goblin" not in perm.card.types and "Goblin" not in perm.card.subtypes:
-        return 0
-    n = sum(1 for q in perm.controller.battlefield if q.card.name == "Obelisk of Urd")
-    return 2 * n
+    return _static_anthem(game, perm)[0]
 
 
 def anthem_toughness_mod(game: Game, perm: Permanent) -> int:
-    if "Goblin" not in perm.card.types and "Goblin" not in perm.card.subtypes:
-        return 0
-    n = sum(1 for q in perm.controller.battlefield if q.card.name == "Obelisk of Urd")
-    return 2 * n
+    return _static_anthem(game, perm)[1]
 
 
 def equipment_power_mod(game: Game, eq: Permanent, bearer: Permanent) -> int:

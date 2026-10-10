@@ -2,7 +2,7 @@
 
 `lands` + sum(`slots`) = **99**. Commander is extra (100th). These counts are shells. The commander and the payoff cards come from the user’s `win_condition` and that commander’s colors. A shell is not permission to import a lab deck.
 
-Queries are hints for the Oracle index (`tag:X` = tagger). Always apply `CI ⊆ commander`.
+Queries filter the Lantern neighbor pool (`tag:X` = tagger). They do not scan Oracle in file order. Always apply `CI ⊆ commander`. Card discovery is `generator/atlas.py` (Deckmates, then What it does, then Combos).
 
 Power filters (strip below `focused` unless `must_include`): extra-turn; fast mana (Mana Crypt, Mana Vault, Chrome Mox, Mox Diamond, Mox Opal, Jeweled Lotus, Grim Monolith, Lion's Eye Diamond); Game Changers (Rhystic Study, Smothering Tithe, The One Ring, Cyclonic Rift, Fierce Guardianship, Deflecting Swat, Deadly Rollick, Teferi's Protection, Jeska's Will, Force of Will, Force of Negation, Mana Drain, Thassa's Oracle, Underworld Breach, Consecrated Sphinx, Bolas's Citadel, Ad Nauseam, Necropotence); hard stax (Winter Orb, Static Orb, Stasis, Rule of Law, Arcane Laboratory, Drannith Magistrate, Grand Arbiter Augustin IV, Nether Void, Sphere of Resistance, Trinisphere, Thorn of Amethyst, Collector Ouphe, Null Rod).
 
@@ -62,3 +62,28 @@ More lands; payoff: land-matter.
 3. Shocks/fetches only if remaining budget allows and power is `high`/`cedh`.
 4. Utility lands from theme query if CI + price OK.
 5. Fill remainder with basics.
+
+## Intake density modifiers (apply after shell pick)
+
+Adjust slot counts; keep `lands` fixed unless the user set `land_count`. Steal from `flex` first, then `enabler`, never from `must_include`.
+
+**interaction_density**
+
+| Level | Change |
+|---|---|
+| low | interaction −2 → flex |
+| medium | no change |
+| high | interaction +4, protection +1 ← flex/enabler |
+
+Instants and flash count toward interaction. Do not meet “high” with only sorcery removal.
+
+**stax_density**
+
+| Level | Change |
+|---|---|
+| none | strip hard stax unless `must_include` |
+| light | keep ≤3 soft tax/pillow pieces |
+| medium | stax/protection +4 ← flex; allow soft + listed tax |
+| heavy | use stax shell bias; stax/protection +6 ← flex/payoff |
+
+If `win_condition` says stax and density is `none`, follow `win_condition` and confirm with the user once.

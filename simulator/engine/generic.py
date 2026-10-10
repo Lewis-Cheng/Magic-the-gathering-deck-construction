@@ -77,10 +77,15 @@ def _swamp_count(game: Game, pl: Player) -> int:
 
 
 def _mana_from_phrase(phrase: str):
-    """Parse an 'Add ...' phrase into (n, colors | 'any')."""
+    """Parse an 'Add ...' phrase into (n, colors | 'any' | 'commander')."""
     p = phrase.lower()
+    if "commander" in p and "color identity" in p:
+        return 1, "commander"
     if "one mana of any color" in p or "any one color" in p:
         return 1, "any"
+    if "mana of any one color" in p:
+        # Sanctum Weaver: X mana of any one color
+        return None  # handled by named hook / caller
     if "for each swamp" in p:
         return None  # handled by caller
     syms = re.findall(r"{([^}]*)}", p)
@@ -181,7 +186,16 @@ def generic_on_enter(game: Game, perm: Permanent) -> None:
     n = perm.card.name
     t = perm.card.text.lower()
     if perm.card.is_land:
-        if "enters the battlefield tapped" in t or "enters tapped" in t:
+        # Shock / check lands: "As this land enters, you may pay 2 life. If you don't, it enters tapped."
+        if "you may pay 2 life" in t and "enters tapped" in t:
+            if pl.life > 2:
+                pl.life -= 2
+                perm.tapped = False
+                game.log(f"      {pl.name} pays 2 life: {n} untapped")
+            else:
+                perm.tapped = True
+        elif "enters the battlefield tapped" in t or (
+                "enters tapped" in t and "you may pay" not in t):
             perm.tapped = True
         if pl.commander.name == "The Wandering Minstrel" and perm.card.name != pl.commander.name:
             perm.tapped = False  # lands you control enter untapped
@@ -295,22 +309,22 @@ def on_draw(game: Game, pl: Player, n: int) -> None:
             for q in list(p.battlefield):
                 nm = q.card.name
                 if nm == "Nekusar, the Mindrazer" and p is not pl:
-                    pl.life -= n
+                    game.lose_life(pl, n)
                     game.log(f"      Nekusar: {pl.name} loses {n} life")
                 elif nm == "Sheoldred, the Apocalypse":
                     if p is pl:
                         pl.life += 2 * n
                         game.log(f"      Sheoldred: {pl.name} gains {2*n} life")
                     else:
-                        pl.life -= 2 * n
+                        game.lose_life(pl, 2 * n)
                         game.log(f"      Sheoldred: {pl.name} loses {2*n} life")
                 elif nm == "Orcish Bowmasters" and p is not pl:
-                    pl.life -= n
+                    game.lose_life(pl, n)
                     game.log(f"      Orcish Bowmasters: {pl.name} loses {n} life")
                 elif nm == "Niv-Mizzet, Parun" and p is pl:
                     opp = _lowest_opponent(game, pl)
                     if opp:
-                        opp.life -= n
+                        game.lose_life(opp, n)
                         game.log(f"      Niv-Mizzet: {opp.name} loses {n} life")
                 elif nm == "Consecrated Sphinx" and p is not pl:
                     game.draw(p, 2 * n)
@@ -394,7 +408,7 @@ def generic_upkeep(game: Game, pl: Player) -> None:
         n = q.card.name
         if n == "The One Ring":
             game.draw(pl, 1)
-            pl.life -= 1
+            game.lose_life(pl, 1)
             game.log("      The One Ring: draw 1, lose 1")
         elif n == "Necropotence":
             pass
@@ -428,7 +442,7 @@ def generic_on_death(game: Game, perm: Permanent) -> None:
     if perm.card.is_land:
         for p in game.players:
             if any(q.card.name == "Dingus Egg" for q in p.battlefield):
-                perm.controller.life -= 2
+                game.lose_life(perm.controller, 2)
                 game.log("      Dingus Egg: 2 to land's controller")
                 break
 
@@ -439,45 +453,52 @@ def generic_on_death(game: Game, perm: Permanent) -> None:
 
 def generic_activatable(game: Game, pl: Player) -> List[Tuple[str, Callable]]:
     acts = []
+    _BASIC_TYPES = {"plains": "Plains", "island": "Island", "swamp": "Swamp",
+                    "mountain": "Mountain", "forest": "Forest"}
     for perm in pl.battlefield:
         if perm.tapped:
             continue
         n = perm.card.name
         t = perm.card.text.lower()
         if perm.card.is_land and "sacrifice" in t and "search your library" in t:
-            m = re.search(r"search your library for (?:a |an |up to two |up to three )?([a-z ]+?)(?: card| cards)", t)
+            # Fetch: Search for a Forest or Plains card (etc.)
+            m = re.search(
+                r"search your library for (?:a |an )?((?:basic )?(?:plains|island|swamp|mountain|forest)"
+                r"(?: or (?:plains|island|swamp|mountain|forest))*) card",
+                t)
             if m:
-                want = m.group(1).strip()
+                want_raw = m.group(1)
+                wanted = [_BASIC_TYPES[w] for w in re.findall(
+                    r"plains|island|swamp|mountain|forest", want_raw)]
                 enters_tapped = "onto the battlefield tapped" in t
-                def _fetch(perm=perm, want=want, enters_tapped=enters_tapped):
+
+                def _fetch(perm=perm, wanted=wanted, enters_tapped=enters_tapped):
+                    if perm not in pl.battlefield or perm.tapped:
+                        return
                     game.sacrifice(pl, perm)
-                    pl.life -= 1
-                    parts = [w for w in want.split() if w not in ("basic", "land", "or", "and")]
+                    game.lose_life(pl, 1)
+
                     def pred(c):
                         if not c.is_land:
                             return False
-                        if not parts:
+                        if not wanted:
                             return "Basic" in c.supertypes
-                        return any(w.capitalize() in (c.subtypes | {c.name}) for w in parts)
+                        # Match basic land type in subtypes OR exact basic name
+                        return any(
+                            w in c.subtypes or c.name == w for w in wanted
+                        )
+
+                    before = {id(q) for q in pl.battlefield}
                     found = game.search_library(pl, pred, 1, to_hand=False)
                     if found:
-                        found[0].tapped = enters_tapped
-                        game.log(f"      {pl.name} fetches {found[0].name} with {perm.card.name}")
-                acts.append((f"Fetch with {n}", _fetch))
-                def _fetch(perm=perm, want=want):
-                    game.sacrifice(pl, perm)
-                    pl.life -= 1
-                    parts = [w for w in want.split() if w != "basic"]
-                    def pred(c):
-                        if not c.is_land:
-                            return False
-                        if not parts:
-                            return "Basic" in c.supertypes
-                        return any(w.capitalize() in (c.subtypes | {c.name}) for w in parts)
-                    found = game.search_library(pl, pred, 1, to_hand=False)
-                    if found:
-                        found[0].tapped = True
-                        game.log(f"      {pl.name} fetches {found[0].name} with {perm.card.name}")
+                        for q in pl.battlefield:
+                            if id(q) not in before and q.card.name == found[0].name:
+                                q.tapped = enters_tapped
+                                from .cards import on_enter
+                                on_enter(game, q)
+                                game.log(f"      {pl.name} fetches {q.name} with {n}")
+                                break
+
                 acts.append((f"Fetch with {n}", _fetch))
         if n == "The Wandering Minstrel" and game.mana_available(pl) >= 9:
             towns = sum(1 for q in pl.battlefield if "Town" in q.card.subtypes)
@@ -589,7 +610,11 @@ def _generic_tutor(game: Game, obj: StackObject, t: str) -> bool:
     if to_zone == "hand":
         pl.hand.append(pick)
     elif to_zone == "battlefield":
-        pl.battlefield.append(Permanent(card=pick, controller=pl, owner=pl))
+        entered = Permanent(card=pick, controller=pl, owner=pl)
+        pl.battlefield.append(entered)
+        if pick.is_land:
+            from .cards import on_enter
+            on_enter(game, entered)
     else:
         pl.graveyard.append(pick)
     pl.shuffle()
@@ -648,7 +673,7 @@ def _mass_removal(game: Game, pl: Player, t: str, x: int) -> bool:
     if "each player loses x life" in t or "each player loses x life, discards" in t:
         for p in game.players:
             if p.alive:
-                p.life -= x
+                game.lose_life(p, x)
         game.log(f"      Death Cloud: each player loses {x} life")
         return True
     # Wildfire
@@ -754,8 +779,11 @@ def _token_create(game: Game, pl: Player, t: str, x: int) -> bool:
         game.create_treasure(pl, num)
         return True
     name = " ".join(w.capitalize() for w in kinds)
-    game.create_token(pl, name, p, q, types={"Creature"} | {k.capitalize() for k in kinds},
-                      colors=set())
+    game.create_tokens(
+        pl, name, p, q, num,
+        types={"Creature"} | {k.capitalize() for k in kinds},
+        colors=set(),
+    )
     game.log(f"      Tokens: {num}x {name} {p}/{q}")
     return True
 
@@ -810,7 +838,7 @@ def generic_spell_resolution(game: Game, obj: StackObject) -> None:
         m = re.search(r"deals (\d+) damage to each opponent", t)
         if m:
             for opp in game.opponents(pl):
-                opp.life -= int(m.group(1))
+                game.lose_life(opp, int(m.group(1)))
         handled = True
 
     # --- mass removal / MLD
@@ -854,14 +882,14 @@ def generic_spell_resolution(game: Game, obj: StackObject) -> None:
             dmg = x if m.group(1) is None else int(m.group(1))
             opp = _lowest_opponent(game, pl)
             if opp:
-                opp.life -= dmg
+                game.lose_life(opp, dmg)
                 game.log(f"      {card.name}: {dmg} to {opp.name}")
             handled = True
     if not handled:
         m = re.search(r"deals (\d+) damage to each opponent", t)
         if m:
             for opp in game.opponents(pl):
-                opp.life -= int(m.group(1))
+                game.lose_life(opp, int(m.group(1)))
             handled = True
     if not handled:
         m = re.search(r"deals (\d+) damage to each untapped creature", t)
@@ -914,7 +942,7 @@ def generic_spell_resolution(game: Game, obj: StackObject) -> None:
             opp = _lowest_opponent(game, pl)
             if opp:
                 game.draw(opp, len(opp.library))
-                opp.life -= (opp.life + 1) // 2
+                game.lose_life(opp, (opp.life + 1) // 2)
                 game.log(f"      Peer into the Abyss on {opp.name}")
             handled = True
         elif "draw cards equal to your hand size" in t:
@@ -972,14 +1000,14 @@ def generic_spell_resolution(game: Game, obj: StackObject) -> None:
         m = re.search(r"each opponent loses (\d+) life", t)
         if m:
             for opp in game.opponents(pl):
-                opp.life -= int(m.group(1))
+                game.lose_life(opp, int(m.group(1)))
             handled = True
     if not handled:
         m = re.search(r"target (?:player|opponent) loses (\d+) life", t)
         if m:
             opp = _lowest_opponent(game, pl)
             if opp:
-                opp.life -= int(m.group(1))
+                game.lose_life(opp, int(m.group(1)))
             handled = True
     if not handled:
         m = re.search(r"you gain (\d+) life", t)

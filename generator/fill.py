@@ -6,8 +6,9 @@ import json
 from pathlib import Path
 from typing import Optional
 
+from generator.atlas import get_atlas
 from generator.budget import effective_price, substitute, sum_known, within_caps
-from generator.index import CardIndex, get_index
+from generator.index import CardIndex, _matches, get_index
 from generator.lands import build_lands
 from generator.load import require_card
 from generator.models import CardRow, Intake
@@ -55,32 +56,45 @@ def _candidates(
     slot: str,
     query: str,
     *,
+    seeds: list[str],
     skip: set[str],
     intake: Intake,
     recipe: dict,
     remaining: float,
 ) -> list[tuple[str, Optional[float], tuple[str, ...]]]:
-    found = index.search(ci, slot, query, limit=400)
-    rows = []
-    for ic in found:
-        if ic.name in skip:
-            continue
-        if ic.spell_front_mdfc:
-            continue
-        if _power_blocked(ic.name, ic.roles, intake.power_level, recipe):
-            continue
-        p = effective_price(ic.name, lookup(ic.name), intake.owned_cards, intake.proxies)
-        if p is None:
-            continue
-        if not within_caps(p, remaining=remaining + 50, per_card_cap=intake.per_card_cap_usd):
-            # keep slightly over remaining so substitute can still sort cheapest
-            if intake.per_card_cap_usd is not None and p > intake.per_card_cap_usd:
-                continue
-        rows.append((ic.name, p, ic.roles))
-    # owned first, then cheap
+    """Names come from the Lantern map around `seeds`, not Oracle file order.
+
+    Deckmates first. If that neighborhood has no card for this slot, planeswalk
+    to What it does, then Combos. The slot query only filters that neighborhood.
+    """
+    atlas = get_atlas()
     owned = set(intake.owned_cards)
-    rows.sort(key=lambda r: (0 if r[0] in owned else 1, r[1] if r[1] is not None else 9999, r[0]))
-    return rows
+    rows = []
+    seen: set[str] = set()
+    for lens in ("synergy", "textual", "combo"):
+        hits = atlas.neighbors(seeds, ci=ci, limit=400, lens=lens, exclude=skip)
+        for name, dist in hits:
+            if name in seen:
+                continue
+            ic = index.by_name.get(name)
+            if ic is None or ic.is_land or ic.spell_front_mdfc:
+                continue
+            if query and not _matches(ic, query, slot):
+                continue
+            if _power_blocked(ic.name, ic.roles, intake.power_level, recipe):
+                continue
+            p = effective_price(ic.name, lookup(ic.name), intake.owned_cards, intake.proxies)
+            if p is None:
+                continue
+            if not within_caps(p, remaining=remaining + 50, per_card_cap=intake.per_card_cap_usd):
+                if intake.per_card_cap_usd is not None and p > intake.per_card_cap_usd:
+                    continue
+            rows.append((ic.name, p, ic.roles, dist))
+            seen.add(name)
+        if rows:
+            break
+    rows.sort(key=lambda r: (0 if r[0] in owned else 1, r[3], r[1] if r[1] is not None else 9999, r[0]))
+    return [(n, p, roles) for n, p, roles, _d in rows]
 
 
 def fill_deck(intake: Intake, cmd_ci: set[str]) -> tuple[list[CardRow], dict, list[str]]:
@@ -152,12 +166,16 @@ def fill_deck(intake: Intake, cmd_ci: set[str]) -> tuple[list[CardRow], dict, li
     for slot, need in list(slots.items()):
         q = queries.get(slot, fallback_q)
         for _ in range(need):
-            cand = _candidates(index, cmd_ci, slot, q, skip=skip, intake=intake, recipe=recipe, remaining=remaining)
+            seeds = [intake.commander] + [c.name for c in cards]
+            cand = _candidates(
+                index, cmd_ci, slot, q, seeds=seeds, skip=skip, intake=intake, recipe=recipe, remaining=remaining
+            )
             pick = substitute([(n, p) for n, p, _r in cand], remaining=remaining, per_card_cap=intake.per_card_cap_usd, skip=skip)
             if pick is None:
-                # documented fallback: more on-color rocks / lands
+                # Same map, wider role filter. Still not an Oracle-order scan.
                 fb = _candidates(
-                    index, cmd_ci, "flex", fallback_q, skip=skip, intake=intake, recipe=recipe, remaining=remaining
+                    index, cmd_ci, "flex", fallback_q, seeds=seeds, skip=skip,
+                    intake=intake, recipe=recipe, remaining=remaining,
                 )
                 pick = substitute([(n, p) for n, p, _r in fb], remaining=remaining, per_card_cap=intake.per_card_cap_usd, skip=skip)
                 if pick is None:

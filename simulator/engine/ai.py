@@ -66,6 +66,9 @@ class AI:
                 if colors == "any":
                     for c in "WUBRG":
                         avail[c] = avail.get(c, 0) + n
+                elif colors == "commander":
+                    for c in (getattr(pl.commander, "color_identity", set()) or set()):
+                        avail[c] = avail.get(c, 0) + n
                 else:
                     for c in colors:
                         avail[c] = avail.get(c, 0) + n
@@ -155,26 +158,45 @@ class AI:
         return Act(_cast)
 
     def spell_score(self, game: Game, pl: Player, c: CardDef, x: int) -> float:
-        """Tag-based priority. Card names do not select a strategy."""
+        """Tag-based priority, with Terra/enchantress bias when those engines are live."""
         tags = set(c.tags or [])
         text = (c.text or "").lower()
+        score = 3.0
         if "ramp" in tags or "rock" in tags or "{t}: add" in text:
-            return 8 - c.mana_cost.cmc() * 0.3
-        if c.name == pl.commander.name:
-            return 8
-        if "tutor" in tags or "search your library" in text:
-            return 7
-        if "draw" in tags or "draw " in text:
-            return 6
-        if "removal" in tags or "counter" in tags:
-            return 5
-        if "token" in tags or "create " in text:
-            return 5
-        if c.is_creature and c.mana_cost.cmc() <= 4:
-            return 4
-        if c.is_artifact:
-            return 4
-        return 3
+            score = 8 - c.mana_cost.cmc() * 0.3
+        elif c.name == pl.commander.name:
+            # First cast is the plan. Later casts pay commander tax and skip the rest of the deck.
+            score = 9 if pl.commander_tax == 0 else 3
+        elif "tutor" in tags or "search your library" in text:
+            score = 7
+        elif "draw" in tags or "draw " in text:
+            score = 6
+        elif "removal" in tags or "counter" in tags:
+            score = 5
+        elif "token" in tags or "create " in text:
+            score = 7.5
+        if "1 damage to each opponent" in text and "whenever a creature" in text:
+            score = max(score, 8.6)
+        if "can't attack you unless" in text:
+            score = max(score, 9.2)
+        elif c.is_creature and c.mana_cost.cmc() <= 4:
+            score = 4
+        elif c.is_artifact:
+            score = 4
+        # Enchantress synergy: prioritize enchantments when draw engines are online
+        enchant_engines = {
+            "Sythis, Harvest's Hand", "Enchantress's Presence", "Mesa Enchantress",
+            "Verduran Enchantress", "Eidolon of Blossoms", "Setessan Champion",
+            "Sanctum Weaver", "Opalescence", "Starfield of Nyx",
+        }
+        live = any(q.card.name in enchant_engines for q in pl.battlefield)
+        if c.is_enchantment:
+            score = max(score, 7.5 if live else 6.0) - c.mana_cost.cmc() * 0.15
+        if live and c.name in enchant_engines:
+            score = max(score, 8.5)
+        if pl.commander.name.startswith("Terra") and c.is_enchantment:
+            score = max(score, 7.0)
+        return score
     def activations(self, game: Game, pl: Player):
         from . import cards
         return cards.activatable(game, pl)
@@ -272,19 +294,19 @@ class AI:
         # discard worst: lands first (keep spells), then high-cost low-value
         nonlands = [c for c in pl.hand if not c.is_land]
         if nonlands:
-            return max(nonlands, key=lambda c: self.spell_score(game, pl, c, 0, False))
+            return max(nonlands, key=lambda c: self.spell_score(game, pl, c, 0))
         return pl.hand[0]
 
     def split_piles(self, game: Game, opp: Player, cards: List[CardDef]):
         """Fact or Fiction: opponent splits; put the best 2-3 together."""
-        scored = sorted(cards, key=lambda c: self.spell_score(game, opp, c, 0, False), reverse=True)
+        scored = sorted(cards, key=lambda c: self.spell_score(game, opp, c, 0), reverse=True)
         pile1 = scored[:2]
         pile2 = scored[2:]
         return (pile1, pile2)
 
     def pick_pile(self, game: Game, pl: Player, piles):
-        s1 = sum(self.spell_score(game, pl, c, 0, False) for c in piles[0])
-        s2 = sum(self.spell_score(game, pl, c, 0, False) for c in piles[1])
+        s1 = sum(self.spell_score(game, pl, c, 0) for c in piles[0])
+        s2 = sum(self.spell_score(game, pl, c, 0) for c in piles[1])
         return piles[0] if s1 >= s2 else piles[1]
 
     def choose_jeskas_modes(self, game: Game, pl: Player, both: bool) -> List[str]:

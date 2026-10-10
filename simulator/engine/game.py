@@ -91,7 +91,20 @@ class Permanent:
         return self.card.name
 
     def is_creature(self) -> bool:
-        return self.card.is_creature or self.token and self.token_creature
+        if self.card.is_creature or (self.token and self.token_creature):
+            return True
+        # Opalescence / Starfield of Nyx: non-Aura enchantments become creatures
+        if self.card.is_enchantment and "Aura" not in (self.card.subtypes or set()):
+            if self.card.name in ("Opalescence", "Starfield of Nyx"):
+                return False
+            ctrl = self.controller
+            if any(q.card.name == "Opalescence" for q in ctrl.battlefield if q is not self):
+                return True
+            if any(q.card.name == "Starfield of Nyx" for q in ctrl.battlefield if q is not self):
+                ench = sum(1 for q in ctrl.battlefield if q.card.is_enchantment)
+                if ench >= 5:
+                    return True
+        return False
 
     token_creature: bool = False
 
@@ -118,6 +131,9 @@ class Permanent:
             p = int(self.card.power)
         elif self.token:
             p = self.token_power
+        elif self.card.is_enchantment and self.is_creature() and not self.card.is_creature:
+            # Opalescence / Starfield: P/T = mana value
+            p = self.card.mana_cost.cmc()
         p += self.counters.get("+1/+1", 0)
         p += self.eot_power_mod
         from .cards import equipment_power_mod
@@ -133,6 +149,8 @@ class Permanent:
             t = int(self.card.toughness)
         elif self.token:
             t = self.token_toughness
+        elif self.card.is_enchantment and self.is_creature() and not self.card.is_creature:
+            t = self.card.mana_cost.cmc()
         t += self.counters.get("+1/+1", 0)
         t += self.eot_toughness_mod
         from .cards import equipment_toughness_mod
@@ -164,6 +182,7 @@ class Player:
         self.mana_pool: Dict[str, int] = defaultdict(int)
         self.commander_tax = 0
         self.commander_damage: Dict[str, int] = defaultdict(int)
+        self.poison = 0
         self.land_played = False
         self.tokens_created_turn = False
         self.spells_cast_turn = 0
@@ -329,6 +348,8 @@ class Game:
                 self.play_turn(pl)
                 if self.over:
                     break
+        if not self.over:
+            self.check_sba_and_triggers()
         if self.over and self.winner is not None:
             self.log(f"WINNER: {self.winner.name}")
         else:
@@ -356,6 +377,7 @@ class Game:
         for perm in pl.battlefield:
             perm.summon_sick = False
         pl.land_played = False
+        pl.extra_land_allowance = 0  # temporary extras only; Dryad is static
         pl.tokens_created_turn = False
         pl.spells_cast_turn = 0
         pl.attacked_this_turn = set()
@@ -620,6 +642,16 @@ class Game:
         elif len(alive) == 0:
             self.over = True
 
+    def lose_life(self, pl: Player, amount: int) -> None:
+        """Life loss that cannot pass below 0. A player at 0 loses immediately."""
+        if amount <= 0 or not pl.alive:
+            return
+        pl.life -= amount
+        if pl.life < 0:
+            pl.life = 0
+        if pl.life <= 0:
+            self.eliminate(pl, "life <= 0 (0)")
+
     def destroy(self, perm: Permanent, why: str = "") -> None:
         if perm not in perm.controller.battlefield:
             return
@@ -721,7 +753,7 @@ class Game:
                     and from_zone == "hand" and not free)
         if lifecast:
             self.flags[f"{pl.name}_demon_lifecast"] = False
-            pl.life -= min(pl.life - 1, card.mana_cost.cmc())
+            game.lose_life(pl, min(max(pl.life - 1, 0), card.mana_cost.cmc()))
             cost = ManaCost()
             self.log(f"    {pl.name} lifecasts {card.name} paying "
                      f"{card.mana_cost.cmc()} life (Demon of Fate's Design)")
@@ -746,9 +778,13 @@ class Game:
                 pl.library.remove(card)
         if from_zone == "command":
             pl.commander_tax += 2  # 903.8
+        cant = bool(self.flags.get("thryx") and card.mana_cost.cmc() >= 5)
+        if (card.is_creature or card.is_enchantment) and any(
+                q.card.name == "Destiny Spinner" for q in pl.battlefield):
+            cant = True
         obj = StackObject(kind="spell", card=card, controller=pl, x=x,
                           targets=targets or [], modes=modes or [],
-                          cant_be_countered=bool(self.flags.get("thryx") and card.mana_cost.cmc() >= 5),
+                          cant_be_countered=cant,
                           manacost=cost, flashback=flashback, from_grave=(from_zone == "grave"),
                           overload=overload)
         if free:
@@ -834,11 +870,22 @@ class Game:
         return ManaCost(generic=generic, colored=colored, x=mc.x)
 
     def pay_total(self, pl: Player, card: CardDef, cost: ManaCost, from_zone: str = "hand") -> bool:
-        """Pay mana cost incl. convoke (702.50). Mana abilities don't use the stack (605.3a)."""
-        need_g = cost.generic
+        """Pay mana cost incl. convoke (702.50) and hybrid (202.2d). Rollback on fail."""
+        need_g = cost.generic + cost.colorless
         need_c = dict(cost.colored)
-        # convoke (702.50): tap untapped creatures to pay 1 generic or 1 of
-        # their color; Chief Engineer grants convoke to artifact spells
+        hybrids = list(cost.hybrid or [])
+        snap_pool = dict(pl.mana_pool)
+        snap_tap = [(q, q.tapped) for q in pl.battlefield]
+        snap_life = pl.life
+
+        def _rollback() -> None:
+            pl.mana_pool.clear()
+            pl.mana_pool.update(snap_pool)
+            for q, was in snap_tap:
+                q.tapped = was
+            pl.life = snap_life
+
+        # convoke (702.50)
         convoke_ok = "Convoke" in card.keywords or (
             card.is_artifact and any(q.card.name == "Chief Engineer" for q in pl.battlefield))
         used_convokers = 0
@@ -857,71 +904,171 @@ class Game:
                     if need_c[col] == 0:
                         del need_c[col]
             self.flags["last_convoke_count"] = used_convokers
+
+        # Resolve hybrid pips into colored or generic demand (AI picks first option that fits).
+        for h in hybrids:
+            parts = [p.strip().upper() for p in h.split("/")]
+            paid = False
+            for p in parts:
+                if p.isdigit():
+                    need_g += int(p)
+                    paid = True
+                    break
+                if p in "WUBRG" and pl.mana_pool.get(p, 0) > 0:
+                    need_c[p] = need_c.get(p, 0) + 1
+                    paid = True
+                    break
+            if not paid:
+                # Prefer a color in commander's identity, else first color, else generic-2 style.
+                cols = [p for p in parts if p in "WUBRG"]
+                if cols:
+                    ci = set(getattr(pl.commander, "color_identity", set()) or [])
+                    pick = next((c for c in cols if c in ci), cols[0])
+                    need_c[pick] = need_c.get(pick, 0) + 1
+                elif any(p.isdigit() for p in parts):
+                    need_g += max(int(p) for p in parts if p.isdigit())
+                else:
+                    need_g += 1
+
         if need_g > 0 or need_c:
             if not self.pay_mana(pl, need_g, need_c):
+                _rollback()
                 return False
         return True
 
+    def _can_tap_for_mana(self, perm: Permanent) -> bool:
+        """302.6: {T} mana abilities on creatures still require haste / not sick."""
+        if not perm.is_creature():
+            return True
+        if perm.has_ability("haste") or perm.eot_haste:
+            return True
+        return not perm.summon_sick
+
     def pay_mana(self, pl: Player, generic: int, colored: Dict[str, int]) -> bool:
-        """Pay from mana pool, then activate untapped mana sources (605)."""
-        # use pool first
-        for c in list(colored):
-            use = min(colored[c], pl.mana_pool[c])
-            colored[c] -= use
-            pl.mana_pool[c] -= use
-            if colored[c] == 0:
-                del colored[c]
-        # pool colorless/generic
-        pool_c = pl.mana_pool["C"] + pl.mana_pool["*"]
-        use = min(generic, pool_c)
-        generic -= use
-        if pl.mana_pool["C"] >= use:
-            pl.mana_pool["C"] -= use
-        else:
-            rem = use - pl.mana_pool["C"]
-            pl.mana_pool["C"] = 0
-            pl.mana_pool["*"] -= rem
-        # activate untapped sources (AI picks order; engine enforces color)
-        sources = [q for q in pl.battlefield if not q.tapped and self.is_mana_source(q)]
+        """Pay from pool; activate sources by floating full yield, then drain (605).
+
+        On failure restores pool/taps/life so a failed payment never leaves lands tapped.
+        Sol Ring floats both {C}{C} before drain, so unused mana stays in the pool.
+        """
+        need_g = int(generic)
+        need_c = {k: int(v) for k, v in dict(colored).items() if v}
+        snap_pool = dict(pl.mana_pool)
+        snap_tap = [(q, q.tapped) for q in pl.battlefield]
+        snap_life = pl.life
+
+        def _rollback() -> None:
+            pl.mana_pool.clear()
+            pl.mana_pool.update(snap_pool)
+            for q, was in snap_tap:
+                q.tapped = was
+            pl.life = snap_life
+
+        def _drain() -> None:
+            nonlocal need_g, need_c
+            for c in list(need_c):
+                use = min(need_c[c], pl.mana_pool.get(c, 0))
+                need_c[c] -= use
+                pl.mana_pool[c] = pl.mana_pool.get(c, 0) - use
+                if need_c[c] == 0:
+                    del need_c[c]
+            pool_flex = pl.mana_pool.get("C", 0) + pl.mana_pool.get("*", 0)
+            use = min(need_g, pool_flex)
+            need_g -= use
+            take_c = min(use, pl.mana_pool.get("C", 0))
+            pl.mana_pool["C"] = pl.mana_pool.get("C", 0) - take_c
+            pl.mana_pool["*"] = pl.mana_pool.get("*", 0) - (use - take_c)
+            # Colored mana may also pay generic (CR 202.3)
+            for c in "WUBRG":
+                if need_g <= 0:
+                    break
+                use = min(need_g, pl.mana_pool.get(c, 0))
+                need_g -= use
+                pl.mana_pool[c] = pl.mana_pool.get(c, 0) - use
+
+        def _float(n: int, colors, side, perm: Permanent) -> None:
+            if colors in ("any", "commander"):
+                ci = set(getattr(pl.commander, "color_identity", set()) or set())
+                left = n
+                allowed = ci if colors == "commander" else set("WUBRG")
+                for c in list(need_c):
+                    if left <= 0:
+                        break
+                    if c not in allowed:
+                        continue
+                    take = min(left, need_c[c])
+                    pl.mana_pool[c] = pl.mana_pool.get(c, 0) + take
+                    left -= take
+                if left > 0:
+                    if colors == "commander" and ci:
+                        pick = next(iter(ci))
+                        pl.mana_pool[pick] = pl.mana_pool.get(pick, 0) + left
+                    else:
+                        pl.mana_pool["*"] = pl.mana_pool.get("*", 0) + left
+            elif isinstance(colors, list) and len(colors) > 1 and n == 1:
+                pick = next((c for c in colors if c in need_c), colors[0])
+                key = "C" if pick == "C" else pick
+                pl.mana_pool[key] = pl.mana_pool.get(key, 0) + 1
+            elif isinstance(colors, list) and len(colors) == 1:
+                key = "C" if colors[0] == "C" else colors[0]
+                pl.mana_pool[key] = pl.mana_pool.get(key, 0) + n
+            elif isinstance(colors, list):
+                for i in range(n):
+                    key = colors[i] if i < len(colors) else colors[-1]
+                    key = "C" if key == "C" else key
+                    pl.mana_pool[key] = pl.mana_pool.get(key, 0) + 1
+            else:
+                pl.mana_pool["C"] = pl.mana_pool.get("C", 0) + n
+            perm.tapped = True
+            pl.mana_abilities_used += 1
+            if side is not None:
+                side(self, pl, perm)
+
+        _drain()
+        if need_g <= 0 and not need_c:
+            return True
+
+        from .cards import mana_abilities
+        sources = [q for q in pl.battlefield
+                   if not q.tapped and self.is_mana_source(q) and self._can_tap_for_mana(q)]
         for perm in sources:
-            from .cards import mana_abilities
-            for (n, colors, side) in mana_abilities(self, perm):
-                if generic <= 0 and not colored:
+            if need_g <= 0 and not need_c:
+                break
+            abilities = mana_abilities(self, perm)
+            chosen = None
+            for (n, colors, side) in abilities:
+                if n <= 0:
+                    continue
+                if colors == "commander":
+                    ci = set(getattr(pl.commander, "color_identity", set()) or set())
+                    if not ci:
+                        continue
+                    if need_c and not (set(need_c) & ci) and need_g <= 0:
+                        continue
+                    chosen = (n, colors, side)
                     break
                 if colors == "any":
-                    if colored:
-                        c = next(iter(colored))
-                        take = min(n, colored[c])
-                        colored[c] -= take
-                        n -= take
-                        if colored[c] == 0:
-                            del colored[c]
-                        if n > 0:
-                            use = min(n, generic)
-                            generic -= use
-                    else:
-                        use = min(n, generic)
-                        generic -= use
-                else:
-                    take = 0
-                    for c in colors:
-                        if c in colored and colored[c] > 0:
-                            t = min(n, colored[c])
-                            colored[c] -= t
-                            take += t
-                            if colored[c] == 0:
-                                del colored[c]
-                    rem = n - take
-                    if rem > 0:
-                        use = min(rem, generic)
-                        generic -= use
-                perm.tapped = True
-                pl.mana_abilities_used += 1
-                if side is not None:
-                    side(self, pl, perm)
-            if generic <= 0 and not colored:
-                break
-        return generic <= 0 and not colored
+                    chosen = (n, colors, side)
+                    break
+                if isinstance(colors, list) and any(c in need_c for c in colors):
+                    chosen = (n, colors, side)
+                    break
+            if chosen is None:
+                for (n, colors, side) in abilities:
+                    if n <= 0:
+                        continue
+                    if need_g > 0:
+                        chosen = (n, colors, side)
+                        break
+            if chosen is None:
+                continue
+            n, colors, side = chosen
+            _float(n, colors, side, perm)
+            _drain()
+
+        if need_g <= 0 and not need_c:
+            return True
+        _rollback()
+        return False
 
     def after_mana_ability(self, pl: Player, perm: Permanent) -> None:
         from .cards import after_mana_ability
@@ -959,7 +1106,9 @@ class Game:
             pl.graveyard.remove(card)
         perm = Permanent(card=card, controller=pl, owner=pl)
         pl.battlefield.append(perm)
-        if pl.land_played:
+        # Consume a temporary extra-land counter only; static extras (Dryad)
+        # are re-counted each call to land_allowance and must not go negative.
+        if pl.land_played and pl.extra_land_allowance > 0:
             pl.extra_land_allowance -= 1
         pl.land_played = True
         self.log(f"    {pl.name} plays land {card.name}" + (" (from graveyard)" if from_zone == "grave" else ""))
@@ -980,6 +1129,12 @@ class Game:
                       haste: bool = False, colors: Optional[Set[str]] = None) -> List[Permanent]:
         if count <= 0:
             return []
+        # Replacement: "creates twice that many of those tokens instead"
+        # (Anointed Procession and the same wording). Each such permanent doubles.
+        for perm in controller.battlefield:
+            text = (perm.card.text or "").lower()
+            if "tokens under your control, it creates twice that many" in text:
+                count *= 2
         tset = set(types or {"Creature"})
         card = CardDef(name=name, mana_cost=ManaCost(), mana_cost_str="",
                        types=tset, supertypes=set(), subtypes=set(),
@@ -1050,8 +1205,17 @@ class Game:
         legal = {id(q) for q in self.legal_attackers(pl)}
         chosen = [q for q in chosen if id(q) in legal]
         for perm in chosen:
+            target = pl.ai.attack_target(self, pl, perm)
+            tax = 0
+            if target is not None:
+                for q in target.battlefield:
+                    if "can't attack you unless" in (q.card.text or "").lower():
+                        tax += 2
+            # This bot does not pay to attack through Ghostly Prison and the same tax.
+            if tax:
+                continue
             perm.tapped = True if not perm.has_ability("vigilance") else perm.tapped
-            perm.attacking = pl.ai.attack_target(self, pl, perm)
+            perm.attacking = target
             perm.blocked = False
             perm.blockers = []
             pl.attacked_this_turn.add(perm.attacking.name if perm.attacking else "?")
@@ -1108,6 +1272,7 @@ class Game:
             self.deal_combat_damage(pl, fs_creatures)
             self.check_sba_and_triggers()
         self.deal_combat_damage(pl, reg_creatures)
+        self.check_sba_and_triggers()
 
     def deal_combat_damage(self, pl: Player, creatures: List[Permanent]) -> None:
         moon = self.flags.get("_moonmist_combat") == self.turn_no
@@ -1173,13 +1338,30 @@ class Game:
                     "R" in source.card.colors or "Red" in source.card.colors):
                 amount += 2
         if isinstance(target, Player):
+            if not target.alive:
+                return
+            infect = source is not None and (
+                "infect" in {k.lower() for k in (source.card.keywords or set())}
+                or source.card.name == "Blightsteel Colossus"
+            )
+            if infect:
+                target.poison += amount
+                self.log(f"      {source.name} infects {target.name} for {amount} (poison {target.poison})")
+                if target.poison >= 10 and target.alive:
+                    self.eliminate(target, f"poison {target.poison}")
+                return
             target.life -= amount
+            if target.life < 0:
+                target.life = 0
+            dead = target.life <= 0
             if source is not None and source.card.is_legendary and not source.token and (
                     source.card is source.owner.commander or source.card.name == source.owner.commander.name):
                 target.commander_damage[source.owner.name] += amount
                 self.log(f"      {source.name} deals {amount} to {target.name} (commander dmg {target.commander_damage[source.owner.name]})")
             else:
                 self.log(f"      {source.name} deals {amount} to {target.name} (life {target.life})")
+            if dead:
+                self.eliminate(target, "life <= 0 (0)")
         else:
             target.damage += amount
             self.log(f"      {source.name} deals {amount} to {target.name} (marked {target.damage}/{target.toughness(self)})")

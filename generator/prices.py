@@ -9,7 +9,7 @@ from functools import lru_cache
 from pathlib import Path
 from typing import Optional
 
-PRICES_PATH = Path(__file__).resolve().parents[1] / "ovika" / "rulebook" / "data" / "card_prices.json"
+PRICES_PATH = Path(__file__).resolve().parents[1] / "simulator" / "rulebook" / "data" / "card_prices.json"
 PRICES_AS_OF = "2026-09-13-local-card_prices.json"
 USER_AGENT = "mtg-edh-generator/1.0 (local V1; contact: lab)"
 

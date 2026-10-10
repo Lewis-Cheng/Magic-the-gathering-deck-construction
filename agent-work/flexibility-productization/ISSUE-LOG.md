@@ -50,4 +50,18 @@ Simulator greps: `ovika/pod_v12.py`, `ovika/engine/ai.py`, `ovika/engine/generic
 
 ---
 
+## I1 — Mandatory AskQuestion intake every run
+
+- **Status:** closed
+- **Code changed:** none (skill/docs only this pass).
+- **Skill audit:** `.cursor/skills/mtg-commander-deck-generator/SKILL.md` — hard-stop intake via AskQuestion (or conversational wait); required `interaction_density`, `stax_density`; transform/`back_face_plan` probe; forbid inferring win condition from seed lists. `schemas.md` + `recipes.md` density modifiers updated.
+- **Simulator audit:** No pod/constructor change. Optimize must not strip interaction/stax below intake when skill is followed.
+
 <!-- Phase 1+ sections appended below as issues close -->
+
+## L1 — Shop cards come from the Lantern map
+
+- **Status:** closed
+- **Code changed:** `generator/atlas.py`, `generator/data/atlas_map.json` (Endless Atlas TRUE positions via Lantern), `generator/fill.py`, `generator/graph.py`, `simulator/optimize.py` replacement. Curated enchantress add-list and Oracle-order `index.search` are no longer how names are chosen.
+- **Skill audit:** Product skill non-negotiable 2 and `recipes.md` now require Deckmates neighbors first, then What it does, then Combos. Scryfall stays prices only. EDHREC average lists are not a search.
+- **Simulator audit:** `graph.py` role gate unchanged. Optimize swaps ask the atlas before any bot game. `Oracle.require` still rejects unknown names.
