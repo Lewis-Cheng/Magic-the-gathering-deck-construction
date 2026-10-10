@@ -4,7 +4,8 @@ Commander deck construction for any legal commander. The product path is the ski
 
 ## What is here
 
-- `.cursor/skills/mtg-commander-deck-generator/` — intake, recipes, and the construction rules.
+- `.cursor/skills/mtg-commander-deck-generator/` — intake, recipes, and the construction rules (Cursor).
+- `perplexity/mtg-commander-deck-generator/` — the same intake and Lantern rules as an Agent API Deep Research skill (`preset: medium` only). **Not for Perplexity Computer.** See `perplexity/README.md`.
 - `generator/` — legal 99 construction, prices, and Lantern-map card search (`generator/atlas.py`).
 - `simulator/` — heuristic four-player games, the functional synergy graph, and the optimize loop.
 
